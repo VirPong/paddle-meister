@@ -1,0 +1,4 @@
+\beamer@endinputifotherversion {3.07pt}
+\beamer@sectionintoc {1}{Progress}{2}{0}{1}
+\beamer@sectionintoc {2}{What We Need}{7}{0}{2}
+\beamer@subsectionintoc {2}{1}{Game Design}{10}{0}{2}
