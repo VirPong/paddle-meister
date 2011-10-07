@@ -1,17 +1,14 @@
 <HTML>
 <head>
-<script src="node_modules/socket.io/socket.io.js"></script>
-</head>
-<body>
+<script src="http://10.150.1.204:3000/socket.io/socket.io.js"></script>
 <script>
-  var socket = io.connect('http://cs340-serv:8000');
+  var socket = io.connect('10.150.1.204:3000');
   socket.on('news', function (data) {
-    console.log(data);
-    console.log('NEWS!');
-    socket.emit('my other event', { my: 'data' });
+    alert(data.hello);
   });
 </script>
-
-Get your pain on.
+</head>
+<body>
+Get your pong on.
 </body>
 </HTML>
