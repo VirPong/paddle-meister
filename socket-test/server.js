@@ -8,6 +8,8 @@ app.get('/', function(req, res){
   socket.on("news", function (data) {\
     alert(data.hello);\
   });\
+  var myData = prompt("Get data!");\
+  socket.emit("news", { hello: myData });\
 </script>');
 });
 
@@ -17,4 +19,5 @@ var io = sio.listen(app);
 
 io.sockets.on('connection', function (socket) {
   socket.emit('news', { hello: 'world' });
+  socket.on('news', function(data) { console.log(data.hello);});
 });
