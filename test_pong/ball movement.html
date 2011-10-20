@@ -1,0 +1,249 @@
+<html>
+<head>
+<title>Ping Pong</title>
+
+<script language="JavaScript">
+<!--
+var gameLoaded=false;
+var gameOver=true;
+var gamePaused=false;
+var oldPaddlePos=0;
+
+var incrX;
+var incrY;
+var limit;
+
+var titleH = 30;//title bar height
+var titleT = 0;  // entire title bar position
+var ballWH = 20;//ball velocity / start position ??? see moveIt method / controls the ball recognition of paddle(LEAVE AT 20 for now ugh)
+var paddleW = 840; //paddle width
+var paddleH = 20; // paddle thickness
+var boardW = 840; //board width
+var boardH = 580; // board height
+var boardT = titleH; // hit box for the top....border
+var boardL = 20; // position of board left or right
+var buttonH = 30; // makes the button title areas bigger or smaller
+
+var mouseX = 0;
+var mouseY = 0;
+
+// Set up event capturing.
+document.onmousemove = getMousePosition;
+
+function moveIt()
+{
+	if (!gameOver)
+	{
+		return;
+	}
+
+	limit = 0;
+	incrX = ballWH;
+	incrY = ballWH;
+
+   	ball.style.pixelLeft = boardL;
+   	ball.style.pixelTop = boardT+(ballWH*4);
+
+	gameOver=false;
+	keepMoving();
+}
+
+function pauseIt()
+{
+	if (!gameOver)
+	{
+		gamePaused = !gamePaused;
+		if (!gamePaused)
+		{
+			keepMoving();
+		}
+	}
+}
+
+function keepMoving()
+{
+	limit++;
+
+	if(gameOver || gamePaused)
+	{
+		return;
+	}
+
+	if(ball.style.pixelTop+ballWH>=boardT+boardH)
+	{
+		incrY = -ballWH;
+		
+	}
+	else if (ball.style.pixelTop<=boardT)
+	{
+		incrY = ballWH;
+	}
+
+	if(ball.style.pixelLeft+ballWH>=boardW+boardL)
+	{
+		incrX = -ballWH;
+		alert(incrX + " the ball x hit point");
+	}
+	else if (ball.style.pixelLeft<=boardL)
+	{
+		incrX = ballWH;
+	}
+
+	ball.style.pixelTop = ball.style.pixelTop + incrY;
+	ball.style.pixelLeft = ball.style.pixelLeft + incrX;
+
+	if (ball.style.pixelTop+ballWH > boardT+boardH-paddleH)
+	{
+		checkIfHitBall();
+	}
+
+	pause=setTimeout("keepMoving()",50);
+}
+
+function getMousePosition(e)
+{
+  	mouseX = event.clientX + document.body.scrollLeft;
+  	mouseY = event.clientY + document.body.scrollTop;
+
+	movePaddle();
+
+  	return true;
+}
+
+function movePaddle()
+{
+	var paddleLeft;
+	
+	if (mouseX<=boardL)
+	{
+		paddleLeft = boardL;
+	}
+	else if (mouseX+paddleW>=boardL+boardW)
+	{
+		paddleLeft = boardL + boardW - paddleW;
+	}
+	else
+	{
+		paddleLeft = mouseX;
+	}
+
+	// only do this if paddle has been created, otherwise error will occur on load
+	if (gameLoaded)
+	{
+		oldPaddlePos = paddle.style.pixelLeft;
+		paddle.style.pixelLeft = paddleLeft;
+	}
+
+}
+
+function checkIfHitBall()
+{
+	if (ball.style.pixelLeft<paddle.style.pixelLeft || ball.style.pixelLeft>paddle.style.pixelLeft+paddleW)
+	{
+		gameOver=true;
+	}
+	else if(oldPaddlePos<paddle.style.pixelLeft)
+	{
+		incrX = ballWH;
+	}
+	else if(oldPaddlePos>paddle.style.pixelLeft)
+	{
+		incrX = -ballWH;
+	}
+}
+
+//-->
+</script>
+
+</head>
+
+<body bgcolor="#cccccc">
+
+<!-- This picture is here only to take up the same amount of space that the background does -->
+<!-- The purpose is so the rest of the page will not overlap this area -->
+<table border=0 cellspacing=2>
+<tr>
+	<td align=center colspan=2
+	><br><img src="images/pixel.gif" name="bg" id="bg"
+	width=440 height=440 alt="This will not work in Netscape"
+	style="visibility:visible; position:relative;"></td>
+</tr>
+</table>
+
+
+<div id="title" style="position:absolute; color: black; font-size: 16pt;" align="center">Ping Pong: Version 1</div>
+
+<div id="board" style="position:absolute; color: white;"> </div>
+<div id="ball" style="position:absolute; color: white;">*</div>
+<div id="paddle" style="position:absolute;"> </div>
+
+
+<div id="btnStart" style="position:absolute;" align="center"><form><input type="button" onClick="moveIt()" value="Start"></form></div>
+<div id="btnPause" style="position:absolute;" align="center"><form><input type="button" onClick="pauseIt()" value="Pause"></form></div>
+
+<script language="JavaScript">
+<!--
+  bg.style.visibility = "hidden";
+
+  with (title.style) {
+   backgroundColor = '#ffff00';
+   visibility = "visible";
+   pixelLeft = boardL;
+   pixelTop = titleT;
+   width = boardW;
+   height = titleH;
+  }
+
+  with (board.style) {
+   backgroundColor = '#000000'; // board color
+   visibility = "visible";
+   pixelLeft = boardL;
+   pixelTop = boardT;
+   width = boardW;
+   height = boardH;
+  }
+
+  with (ball.style) {
+   backgroundColor = '#000000';
+   visibility = "visible";
+   pixelLeft = boardL;
+   pixelTop = boardT+(ballWH*4);
+   width = 40;//ball size
+   height = 40;//ball size
+  }
+
+  with (paddle.style) {
+   backgroundColor = '#ffffff';
+   visibility = "visible";
+   pixelLeft = boardL;
+   pixelTop = boardT+boardH-paddleH; //paddle position stuff
+   width = paddleW;
+   height = paddleH;
+  }
+
+  with (btnStart.style) {
+   backgroundColor = '#00ff00';
+   visibility = "visible";
+   pixelLeft = boardL;
+   pixelTop = boardT+boardH;
+   width = boardW/2;
+   height = buttonH;
+  }
+
+  with (btnPause.style) {
+   backgroundColor = '#00ff00';
+   visibility = "visible";
+   pixelLeft = boardL+(boardW/2);
+   pixelTop = boardT+boardH;
+   width = boardW/2;
+   height = buttonH;
+  }
+	
+  // indicate that the game is finished loading.
+  gameLoaded=true;
+//-->
+</script>
+
+</body>
+</html>
+
