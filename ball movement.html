@@ -72,6 +72,7 @@ function keepMoving()
 	if(ball.style.pixelTop+ballWH>=boardT+boardH)
 	{
 		incrY = -ballWH;
+		alert(ball.style.pixelLeft + " the ball x hit point"); //alerts 
 		
 	}
 	else if (ball.style.pixelTop<=boardT)
@@ -173,9 +174,9 @@ function checkIfHitBall()
 
 <div id="title" style="position:absolute; color: black; font-size: 16pt;" align="center">Ping Pong: Version 1</div>
 
-<div id="board" style="position:absolute; color: white;"> </div>
+<div id="board" style="position:absolute; color: white;">ï¿½</div>
 <div id="ball" style="position:absolute; color: white;">*</div>
-<div id="paddle" style="position:absolute;"> </div>
+<div id="paddle" style="position:absolute;">ï¿½</div>
 
 
 <div id="btnStart" style="position:absolute;" align="center"><form><input type="button" onClick="moveIt()" value="Start"></form></div>
