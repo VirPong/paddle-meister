@@ -29,7 +29,10 @@ var io = sio.listen(app);
 //when someone connects
 io.sockets.on('connection', function (socket) {
   //emit some news
-  socket.emit('news', { hello: 'world' });
+  //socket.emit('news', { hello: 'world' });
   //when I receive some news, put it in the console.
-  socket.on('news', function(data) { console.log(data.hello);});
+  socket.on('user-message', function(data) {
+     console.log(data.data);
+     socket.emit('news', 'Juicy gossip: ' + data.data);
+  });
 });
