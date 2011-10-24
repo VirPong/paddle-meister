@@ -9,17 +9,19 @@ var y = 150;
 // x,y Coords Player 2
 //var qwertyX = 0;
 //var qwertyY = 0;
-var qwertyX = 10;
+var qwertyX = 0;
 var qwertyY = 150;
 // Movement variables
 var dx = 2;
 var dy = 4;
 // Paddle shape
-var paddleHeight = 45;
+var paddleHeight = 80;
 var paddleWidth = 20;
 // Canvas dimensions
-var WIDTH = 400;
-var HEIGHT = 300; 
+var WIDTH = 640;
+var HEIGHT = 480;
+var OFFSETRT = 0; //the off set of canvas to the right
+var OFFSETTOP = 0; // the off set of the canvas from the top
  
 // KeyCode variables for keyboard input
 // Paddle one
@@ -33,6 +35,7 @@ var qwertyS = 83;
 var qwertyD = 68;
 var qwertyW = 87;
 var yPos = 150;
+var xPos = 50;
 
 
 //draws the Ball
@@ -62,7 +65,7 @@ function paddle2(qwertyX,qwertyY){
   ctx.fill();
 }
  
- 
+ // Draws the canvas
 function rect(x,y,w,h) {
   ctx.beginPath();
   ctx.rect(x,y,w,h);
@@ -72,7 +75,7 @@ function rect(x,y,w,h) {
  
  
 function clear() {
-  ctx.clearRect(0, 0, WIDTH + 500, HEIGHT +500); //+500 fixes the ball erase problem of canvas
+  ctx.clearRect(0, 0, WIDTH +500, HEIGHT +500); //+500 fixes the ball erase problem of canvas
 }
  
 function initBall() {
@@ -90,16 +93,16 @@ function initPlayers(){
 function drawPlayers(){
  
   ctx.fillStyle = "#1A7F93";
-  paddle2(qwertyX, yPos);
+  paddle2(xPos, yPos);
    window.onkeydown = function(e){
  
 	// Keyboard input
 	var keyCode = e.keyCode;
 
-	if(keyCode == qwertyW && yPos>20){
+	if(keyCode == qwertyW && yPos> 20){
 		yPos = yPos - 10;
 	}
-	if(keyCode == qwertyS && yPos<275){
+	if(keyCode == qwertyS && yPos< HEIGHT - paddleHeight){
 		yPos = yPos + 10;
 	}
  
@@ -111,20 +114,30 @@ function drawPlayers(){
 function drawBall() {
   clear();
  
-  ctx.fillStyle = "BLACK";
-  rect(10,20,WIDTH,HEIGHT);
+  ctx.fillStyle = "BLACK"; //color of canvas
+  rect(0,0,WIDTH,HEIGHT); //Draws canvas
   
   //draws ball. Takes the x and y coord as parameters
   ctx.fillStyle = "WHITE";
   circle(x,y);
- 
-  if (x + dx > WIDTH || x + dx < 0)
+  ifHit();
+  if ((x + dx > WIDTH || x + dx < 0)){
     dx = -dx;
-  if (y + dy > HEIGHT || y + dy < 0)
+  }
+  if ((y + dy > HEIGHT || y + dy < 0)){
     dy = -dy;
- 
+  }
   x += dx;
   y += dy;
+}
+
+function ifHit(){
+  if(x == xPos + paddleWidth){
+    if(y >= yPos && y <= yPos+paddleHeight){
+       dx = -dx;
+       dy = -dy;
+       }
+     }
 }
  
 initBall();
