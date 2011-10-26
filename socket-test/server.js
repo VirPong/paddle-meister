@@ -1,6 +1,7 @@
 /* Server.js for Vir-Pong, Inc */
 /* Daniel Guilak -- daniel.guilak@gmail.com */
 
+var PORT = 3000;
 //Require the express framework (which creates a server)
 var app = require('express').createServer(),
 sys = require(process.binding('natives').util ? 'util' : 'sys')
@@ -8,7 +9,7 @@ sys = require(process.binding('natives').util ? 'util' : 'sys')
     sio = require('socket.io');
 
 //set the server to listen on port
-app.listen(3000);
+app.listen(PORT);
 
 //set the sockets to listen on same port.
 var io = sio.listen(app);
@@ -38,7 +39,7 @@ setInterval(function() {
     for(s in spectators){
       sendGameState(s);
     }
-  }, 100);
+  }, 50);
 }
 
 //Temporary function to initialize game.
