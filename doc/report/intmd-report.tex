@@ -1,0 +1,81 @@
+\documentclass[letterpaper,12pt]{article}
+
+\begin{document}
+\title{Intermediate Report -- Server Group}
+\author{Ryan Wheeler, Shelby Lee, Patrick Green, Daniel Guilak}
+\date{\today}
+\maketitle
+
+\tableofcontents
+
+\section{Team Profile}
+
+\section{Functional Requirements}
+\subsection{Use Cases}
+%Will probably have lots of \newpage commands here.
+\subsection{System Sequence Diagram}
+\section{Nonfunctional Requirements}
+\section{Domain Analysis}
+\section{Implementation}
+\subsection{Style Guide}
+\subsection{Install Documentation}
+\subsection{Algorithms, Data Structures, and Design Patterns}
+\subsection{Data Storage}
+\subsection{Testing and Verification}
+\section{Planning and Reflection}
+\subsection{Schedule}
+\subsection{Challenges}
+\subsection{Future milestones and Member Assignments}
+\section{References}
+\subsection{Git and Github}
+	\begin{itemize}
+		\item Git (http://git-scm.com/) is a distributed version control system that is widely-used in the open source community.
+		\item Github (http://github.com/) is a web-based hosting service for projects using git. It provides collaboration tools and many other features such as pull requests and commit management that helps small development groups work efficiently.
+		\item The current project repository is hosted on github and collaboration will happen through the web-based UI.
+	\end{itemize}
+\subsubsection{node.js}
+	\begin{itemize}
+		\item node.js (http://nodejs.org/) is an easy-to-learn server-side JavaScript server development environment that supports a myriad of different communication protocols such as HTTP, TCP, and WebSockets.
+		\item Will be used as the framework for the server.
+	\end{itemize}
+\subsubsection{MongoDB}
+	\begin{itemize}
+		\item MongoDB (http://mongodb.org/) is a scalable open-source non-relational database with strong node.js support.
+		\item Will be used as the main database for storing and retrieving game information.
+	\end{itemize}
+\subsubsection{Eclipse}
+	\begin{itemize}
+		\item Eclipse is an Integrated Development Environment written in Java that provides support for many different programming languages and version control systems through plugins -- A git plugin is available, called Egit (http://eclipse.org/egit/).
+		\item Most team members will be using Eclipse IDE for development.
+	\end{itemize}
+\subsubsection{Google Docs}
+	\begin{itemize}
+		\item Google Docs (http://docs.google.com/) is an online document processor with tools similar to Microsoft Word, Powerpoint, and others. It allows for collaboration between different users concurrently on the same document.
+		\item Will be used for collaboration on internal documents and documentation.
+	\end{itemize}
+\section{Schedule}
+\begin{itemize}
+	\item Oct 7 -- A database implemented on the server.
+	\begin{itemize}
+		\item  Be able to have the server do a simple query from the mongoDB database and display it.
+	\end{itemize}
+	\item Oct 7 -- Get the server up and running. 
+	\begin{itemize}
+		\item Be able to have a server that provides text or visual response to simple sample packets from other computers and relays sample information from the database.
+	\end{itemize}
+	\item Oct 11 -- Basic server communication to other devices. 
+	\begin{itemize}
+		\item Have a proof of concept for devices on the Android and iOS platforms to be able to communicate with the server. 
+		\item Have the clients be able to display information queried from the mongoDB database by communicating with the server.
+	\end{itemize}
+	\item Oct 17 -- Simple game engine/logic working.
+	\begin{itemize}
+		\item Translate the rules of two-player (non-computer opponents) pong into JavaScript code that the server can use.
+		\item Most likely will test on a browser such as Chrome or Chromium first.
+	\end{itemize}
+	\item Nov 4 -- Real-time game streaming on web browsers.
+	\begin{itemize}
+		\item Be able to watch a game that is happening between two other clients on a third client (most likely a browser at first
+	\end{itemize}
+\end{itemize}
+\end{document}
