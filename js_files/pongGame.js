@@ -1,21 +1,13 @@
 var canvas;  
 var ctx;
-// x,y Coords Player 1
-// var x = 400;
-// var y = 300;
 // Coords halved to start in middle of field
 var x = 380;
 var y = 150;
-// x,y Coords Player 2
-//var qwertyX = 0;
-//var qwertyY = 0;
-var qwertyX = 0;
-var qwertyY = 150;
 // Movement variables
 var dx = 2;
 var dy = 4;
 // Paddle shape
-var paddleHeight = 80;
+var paddleHeight = 235;
 var paddleWidth = 20;
 // Canvas dimensions
 var WIDTH = 640;
@@ -29,6 +21,8 @@ var left = 37;
 var right = 39;
 var up = 38;
 var down = 40;
+var arrowYPos = 150;
+var arrowXPos = 550;
 // Paddle two
 var qwertyA = 65;
 var qwertyS = 83;
@@ -58,9 +52,9 @@ function paddle1(x,y){
 }
  
 // Added in - Paddle 2
-function paddle2(qwertyX,qwertyY){
+function paddle2(arrowX,arrowY){
   ctx.beginPath();
-  ctx.rect(qwertyX,qwertyY,paddleWidth, paddleHeight);
+  ctx.rect(arrowX,arrowY,paddleWidth, paddleHeight);
   ctx.closePath();
   ctx.fill();
 }
@@ -78,32 +72,41 @@ function clear() {
   ctx.clearRect(0, 0, WIDTH +500, HEIGHT +500); //+500 fixes the ball erase problem of canvas
 }
  
-function initBall() {
+function draw(){
+  drawBall();
+  drawPlayers();
+}
+function init() {
   canvas = document.getElementById("canvas");
   ctx = canvas.getContext("2d");
-  return setInterval(drawBall, 10);
+  return setInterval(draw, 10);
 }
 
-function initPlayers(){
-  canvas = document.getElementById("canvas");
-  ctx = canvas.getContext("2d");
-  return setInterval(drawPlayers,10);
-}
  
 function drawPlayers(){
  
-  ctx.fillStyle = "#1A7F93";
+  ctx.fillStyle = "WHITE";//player left
   paddle2(xPos, yPos);
+  
+  ctx.fillStyle = "#7F3AF8"; //player right
+  paddle1(arrowXPos,arrowYPos);
    window.onkeydown = function(e){
  
 	// Keyboard input
 	var keyCode = e.keyCode;
 
 	if(keyCode == qwertyW && yPos> 20){
-		yPos = yPos - 10;
+		yPos -= 10;
 	}
 	if(keyCode == qwertyS && yPos< HEIGHT - paddleHeight){
-		yPos = yPos + 10;
+		yPos += 10;
+	}
+        if(keyCode == up && arrowYPos > 20){
+		arrowYPos -= 10;
+	}
+
+	if(keyCode == down &&  arrowYPos < HEIGHT - paddleHeight){
+		arrowYPos += 10;
 	}
  
   };
@@ -120,26 +123,42 @@ function drawBall() {
   //draws ball. Takes the x and y coord as parameters
   ctx.fillStyle = "WHITE";
   circle(x,y);
-  ifHit();
-  if ((x + dx > WIDTH || x + dx < 0)){
+  if(ifHit){
+    ifHit();
+  }
+  if(x == OFFSETRT){
+      x = 500;
+  }
+  if(x == WIDTH){
+      x = 100;
+  }
+  if(x + dx > WIDTH || x + dx < 0){
+    x = 100;
     dx = -dx;
   }
-  if ((y + dy > HEIGHT || y + dy < 0)){
+  if (y + dy > HEIGHT || y + dy < 0){
     dy = -dy;
   }
   x += dx;
   y += dy;
 }
-
+/**
+ifHit checks to see if the ball comes in contact with the paddle's coordinates 
+and changes its direction accordingly.  
+*/
 function ifHit(){
-  if(x == xPos + paddleWidth){
-    if(y >= yPos && y <= yPos+paddleHeight){
-       dx = -dx;
-       dy = -dy;
-       }
-     }
+  if(x == xPos + paddleWidth){ //checks if the ball is in the paddle's range of x coordinates
+    if(y >= yPos && y <= yPos+paddleHeight){ //checks if the ball is also in the paddle's y coordinates and if so deflects it. 
+      dx = -dx; //ball x direction is reversed
+    }
+  }
+    if(x == arrowXPos){ //checks if the ball is in the paddle's range of x coordinates
+      if(y >= arrowYPos && y <= arrowYPos + paddleHeight){ //checks if the ball is also in the paddle's y coordinates and if so deflects it.
+         dx = -dx; //ball x direction is reversed
+      }
+    }
+  return true;
 }
  
-initBall();
-initPlayers();
+init();
  
