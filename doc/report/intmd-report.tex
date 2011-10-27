@@ -22,7 +22,114 @@ The Server Team branch of the Vir-Pong project handles the communication between
 In the near future, devices will consist of modern browsers, Android platform phones, or Apple products running iOS with room for expansion on to other platforms as they become feasible. The server will determine the game logic -- such as ball movement and score -- as well as relay data such as paddle positions from each client. The system will also be able to facilitate live streaming of games to and from any client. The server will also provide an API for the WebUI team to access stored game replay files as well as other pertinent information such as user names and IDs. Also included will be detailed documentation on tools, references, and installation instructions.
 
 \section{Functional Requirements}
+
 \subsection{Use Cases}
+
+\noindent \textbf{Scenario Title:}
+\textbf{Version:} \\
+\textbf{Actors:} \\
+\textbf{Pre-conditions:}\\
+\textbf{Post-conditions:}\\
+\textbf{Scenario:}\\
+\begin{enumerate}
+\item
+\end{enumerate}
+
+
+\noindent \textbf{Scenario Title:} Any client connecting to system.\\
+\textbf{Version:} 1.0\\
+\textbf{Actors:} Client, network\\
+\textbf{Pre-conditions:} Client has access to network, system is connected to network and accepting connections.\\
+\textbf{Post-conditions:} Client is connected to system and ready to start a new game or join an existing one.\\
+\textbf{Scenario:}\\
+\begin{enumerate}
+   \item Client requests connection with system.
+   \item System accepts connection, assigns client a client ID.
+   \item System sends client its ID and ready signal.
+   \item System sends client information about current available games.
+\end{enumerate}
+
+\subsubsection \noindent \textbf{Scenario Title:} A client connecting to an open game.\\
+\textbf{Version:}\\
+\textbf{Actors:}\\
+\textbf{Pre-conditions:}\\
+\textbf{Post-conditions:}\\
+\textbf{Scenario:}\\
+\begin{enumerate}
+\item
+\end{enumerate}
+
+\noindent \textbf{Scenario Title:} Store player position in repository.\\
+\textbf{Version:} 1.0\\
+\textbf{Actors:} Client, system, repository, position tracker\\
+\textbf{Pre-conditions:} System operational, client participating in game\\
+\textbf{Post-conditions:} Game ends.\\
+\textbf{Scenario:}\\
+\begin{enumerate}
+\item Client moves, position tracker sends data to system.
+\item System communicates updated position to repository.
+\item Repository logs position of client and adds time stamp.
+\item Continues until system or client ends game.
+\item System reports end of game to repository.
+\item Repository logs end of game with time stamp.
+\end{enumerate}
+
+
+\noindent \textbf{Scenario Title:} Update player scores.\\
+\textbf{Version:}1.1\\
+\textbf{Actors:} Client1, Client2, Repository, Game Logic\\
+\textbf{Pre-conditions:} System Operational, Client1 and Client2 logged in and participating in game \\
+\textbf{Post-conditions:} Game continues\\
+\textbf{Scenario:}\\
+\begin{enumerate}
+\item Client1 moves to hit the ball.
+\item Game logic determines ball movement.
+\item Client2 does not move 
+\item Game logic determines no collision. 
+\item Game logic pause game to informs system of client1 point.
+\item System communicates point incrimination to game repository.
+\item Game repository increments client1’s point.
+\item Game repository communicates current score back to server.
+\item Game repository sends current score to client interface.
+\item Client interface displays current score
+\end{enumerate}
+
+\noindent \textbf{Scenario Title:} Accessing a replay from the repository.\\
+\textbf{Version:} 1.0\\
+\textbf{Actors:} Game Logic, Game repository, Interface\\
+\textbf{Pre-conditions:} System operational.\\
+\textbf{Post-conditions:} User interface shows a replay.\\
+\textbf{Scenario:}\\
+\begin{enumerate}
+\item User chooses a game to watch.
+\item Game repository selects requested game.
+\item Position information from game repository sent to interface.
+\item Position information is iterated over based on time stamp.
+\item Game logic rebuilds ball positions based from recorded positions.
+\item System sends data to user interface to be viewed.
+\end{enumerate}
+
+\noindent \textbf{Scenario Title:} Two clients with simple reactions are playing a game until a winner is determined. \\
+\textbf{Version:}\\
+\textbf{Actors:}\\
+\textbf{Pre-conditions:}\\
+\textbf{Post-conditions:}\\
+\textbf{Scenario:}\\
+\begin{enumerate}
+\item
+\end{enumerate}
+
+\noindent \textbf{Scenario Title:} Client plays against an artificially generated opponent.\\
+\textbf{Version:}\\
+\textbf{Actors:}\\
+\textbf{Pre-conditions:}\\
+\textbf{Post-conditions:}\\
+\textbf{Scenario:}\\
+\begin{enumerate}
+\item
+\end{enumerate}
+
+
 %Will probably have lots of \newpage commands here.
 \subsection{System Sequence Diagram}
 \section{Nonfunctional Requirements}
