@@ -11,16 +11,22 @@
 \author{Ryan Wheeler, Shelby Lee, Patrick Green, Daniel Guilak}
 \date{\today}
 \maketitle
+\newpage
 
 \tableofcontents
+\newpage
 
-\section{Team Profile}
+\section{Our Product}
+The Server Team branch of the Vir-Pong project handles the communication between devices during a pong game, as well as the game logic. The server will function as the hub of communication for devices playing Vir-Pong, and will also maintain a database explicitly for the purpose of replaying games.
+
+In the near future, devices will consist of modern browsers, Android platform phones, or Apple products running iOS with room for expansion on to other platforms as they become feasible. The server will determine the game logic -- such as ball movement and score -- as well as relay data such as paddle positions from each client. The system will also be able to facilitate live streaming of games to and from any client. The server will also provide an API for the WebUI team to access stored game replay files as well as other pertinent information such as user names and IDs. Also included will be detailed documentation on tools, references, and installation instructions.
 
 \section{Functional Requirements}
 \subsection{Use Cases}
 %Will probably have lots of \newpage commands here.
 \subsection{System Sequence Diagram}
 \section{Nonfunctional Requirements}
+There are various secondary features we hope to implement and integrate with our system. The desired communication time between a phone and server should be process and stored with less than a 75 nanosecond lag-time. The server should be able to handle at least 10 simultaneous conversations (games) without failure. If the server is unable to store game data, we will inform client so that the client may present the user with a message stating that the data will not be stored (high scores, replay information, etc.), but otherwise gameplay will remain unaffected. We will also plan on having two types of computer-programmed players. One will simply track ball movement, and the other with more randomization. Ideally we'd have players determine the size of the playing field, and that size would automatically create a ratio that fits to the client interface. These secondary features will bring out the performance and ability of our server and increase the game options Vir-Pong players are afforded. 
 \section{Domain Analysis}
 \section{Implementation}
 \subsection{Style Guide}
@@ -166,6 +172,50 @@ npm install mongojs
 
 \subsection{Algorithms, Data Structures, and Design Patterns}
 \subsection{Data Storage}
+The data we’re storing is specific to games and the players of each. This data is limited to usernames, player positions, gameIDs, and scores. This information will be stored in the noSQL database, mongodb. We choose to use mongodb because it is not only better for real-time, online, multi-player applications, but it has a loose schema that allows us to change the size and information of each document as we will.
+
+This information will be placed in one collection replays. The replays collection in our database will hold game positions and collision data so that we can reverse engineer games as ‘replays’ by pulling out the position data of players and applying current game logic.
+
+    [Here will be E/R diagram]
+
+This diagram is loosely modeled off of an E/R diagram. There are two main classes (player and game), and an association complete with a class between them (position). Player is a repository of information that we will communicate with regarding user identity and later update with score information. Our data’s interactions with player class will be minimal but essential for some of the web user interface secondary features, which including information tracking. There can be as little as no players a game up to two, and the position is only important for non-computer players. The game section of the document will hold the gameID and a boolean status of whether or not the game is current, these pieces of information will be added to every game played to ensure better tracking. The boolean ‘current’ will be set from true to false on all documents composing the game when the game ends. The game will also keep track of scores when they are initialized and whenever they are updated.
+
+The position section of the BSON document will experience the most variability, and thus it is attributed as an association class to the plays association. The position is marked most notably by the coordinates of the current player; these coordinates update upon communication with the server. On updating, there will be a time stamp with an imposed index on it. Collision is a String to help during reconstruction that will denote whether or not the movement caused a collision or the ball simply scored, these will be stored as ‘T’ for collision, ‘F’ for no ball interaction, and ‘M’ for if the ball is missed.
+
+The general form of the BSON documents will look something like this:
+\begin{verbatim}
+var fullDoc = {gameID : Stringnums,
+                p1: username, 
+                p2: username, 
+                p1pos: nums, 
+                p2pos: nums, 
+                p1score: 0, 
+                p2score: 0, 
+                collision: String (T/F/M), 
+                time: times, 
+                current: true
+                };
+\end{verbatim}
+We expect input to look something like this, since we already have the player usernames stored in another document created at the beginning of the game (easily accessible by querying on gameID and searching only for the documents with the ‘p1’ attribute)
+\begin{verbatim}
+var p1Move =  {gameID: Stringnums,
+               p1pos: nums,
+               collision: String (T/F/M),
+               time: times,
+               current: true
+               };
+\end{verbatim}
+On inputting the fact of a player getting a point, we would input a document looking like this. We will merely increment the score by looking back on the latest entry (greatest time stamp) of a player’s score and incrementing it by one
+\begin{verbatim}
+var p2Miss = {gameID: Stringnums,
+              p2:pos,
+              collision: M,
+              p1score: p1score + 1,
+              time: times,
+              current: true
+              };
+\end{verbatim}
+The flexibility allowed by BSON documents will allow us to store variable amounts of data at any one given point. MongoDB also has quick information retrieval, allowing us to quickly go back through stored documents upon updating and input.
 \subsection{Testing and Verification}
 \section{Planning and Reflection}
 \subsection{Schedule}
@@ -203,6 +253,7 @@ npm install mongojs
 	\item Oct 7 -- A database implemented on the server.
 	\begin{itemize}
 		\item  Be able to have the server do a simple query from the mongoDB database and display it.
+		\item 
 	\end{itemize}
 	\item Oct 7 -- Get the server up and running. 
 	\begin{itemize}
