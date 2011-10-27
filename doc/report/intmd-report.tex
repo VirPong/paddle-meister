@@ -86,6 +86,84 @@ function SupportsString(data)
 \end{verbatim}
 Do not compare booleans to true or false. For example, write if (ioService.offline). Compare objects to null, numbers to 0 or strings to "" if there is chance for confusion.
 \subsection{Install Documentation}
+\subsubsection{Server}
+Requirements:
+\begin{itemize}
+\item A relatively new machine (read: purchased/built in the last six years or so) running Linux or Mac OS X (These instructions were generated on a machine running Ubuntu 11.10 -- the configuration used for generation of instructions will henceforth be denoted in parentheses).
+\item Basic Unix tools will already be installed, but other requirements that may not be present in a standard installation are:
+Curl (using 7.21.6)
+Git (using 1.7.5.4)
+\item Connection to the Internet. 
+\end{itemize}
+Instructions:
+Each line is a unix command, and so each of these commands must be typed into a shell of some sort, such as BASH or ZSH (using BASH). Alternatively, these commands can be easily generated into a BASH shell script quite easily of so desired.
+
+To install node and the node package manager (npm):
+
+\begin{verbatim}
+echo 'export PATH=$HOME/local/bin:$PATH' >> ~/.bashrc
+. ~/.bashrc
+mkdir ~/local
+mkdir ~/node-v0.4.9
+cd ~/node-v0.4.9
+curl http://nodejs.org/dist/node-v0.4.9.tar.gz | tar xz --strip-components=1
+./configure --prefix=~/local
+make install # ok, fine, this step probably takes more than 30 seconds...
+curl http://npmjs.org/install.sh | sh
+\end{verbatim}
+
+To install the express web framework and socket.io:
+
+\begin{verbatim}
+
+npm install -g express socket.io #installs express server (expressjs.org) and socket.io
+cd <your directory name>
+express express-test && cd express-test
+npm install -d #resolve dependencies
+node app.js #runs test server with node
+#point browser to localhost:3000 (default) -- should see welcome message
+\end{verbatim}
+
+To run the server:
+
+First, clone the paddle-meister repository using git:
+
+\begin{verbatim}
+git clone git://github.com/VirPong/paddle-meister.git
+\end{verbatim}
+
+Then, navigate to the socket-test folder and execute
+
+\begin{verbatim}
+node server.js
+\end{verbatim}
+
+The server will run at whichever port specified in the PORT variable in server.js. To shutdown the server, press CTRL-C twice.
+
+\subsubsection{MongoDB and Modules}
+First go to mongodb.org and find the path to the most recent 64-bit Linux version. Then put this onto the server using shell commands:
+
+\begin{verbatim}
+wget [path copied from web]
+\end{verbatim}
+Then uncompress the file using tar with
+
+\begin{verbatim}
+tar zxvf [file name].tgz
+\end{verbatim}
+
+Then install MongoDB using the synaptic package manager (Debian-based Linux distributions only):
+\begin{verbatim}
+sudo apt-get install mongodb
+\end{verbatim}
+
+After looking over this open-source module, we determined that node-mongodb-native (https://github.com/christkv/node-mongodb-native) was perfectly suited for our project. This module facilitates a connection between mongodb and our server, which uses node. However, we ran into a compilation error when attempting to run example code, complaining of the native bson parser not being compiled.
+In searching for a solution, we were pointed to another module for mongodb, called mongojs (https://github.com/gett/mongojs). Mongojs is actually a wrapper for mongodb-native that allows code to be written in a format almost identical to the mongodb shell API. This allows the code to be condense and clear.
+We retrieved node-mongodb-native from github and mongojs was installed via npm with the shell command:
+\begin{verbatim}
+npm install mongojs
+\end{verbatim}
+
 \subsection{Algorithms, Data Structures, and Design Patterns}
 \subsection{Data Storage}
 \subsection{Testing and Verification}
