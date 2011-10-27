@@ -1,5 +1,11 @@
 \documentclass[letterpaper,12pt]{article}
-
+\usepackage{geometry}
+\geometry{paper=letterpaper,
+                       body={6.50in, 9.00in},
+                       lmargin=1.00in,
+%                       rmargin=0.75in,
+                       vmarginratio={1:1}
+}
 \begin{document}
 \title{Intermediate Report -- Server Group}
 \author{Ryan Wheeler, Shelby Lee, Patrick Green, Daniel Guilak}
@@ -18,6 +24,67 @@
 \section{Domain Analysis}
 \section{Implementation}
 \subsection{Style Guide}
+\subsubsection{Whitespace}
+The basic indentation is two spaces. Tabs are not to be used at all.
+Try to keep lines to 80 characters or less. When wrapping lines, try to indent to line up with a related item on the previous line. Examples: 
+\begin{verbatim}
+var result = prompt(aMessage,
+                    aInitialValue,
+                    aCaption);
+\end{verbatim}
+Lines should not contain trailing spaces, even after binary operators, commas or semicolons.
+Separate binary operators with spaces.
+Spaces go after commas and semicolons, but not before.
+Spaces go after keywords. For example:
+\begin{verbatim}
+if (x > 0)
+\end{verbatim}
+One (or two) blank lines between block definitions. Also consider breaking up large code blocks with blank lines.
+
+\subsubsection{Commenting}
+Use multi-line comments to explain the purpose behind blocks of code.
+Use in-line comments often to clarify actions.
+
+\subsubsection{Symbols}
+Function braces can either be on their own line or the open brace on the function declaration, i.e.
+
+\begin{verbatim}
+function toOpenWindow(aWindow)
+  {
+    aWindow.document.commandDispatcher.focusedWindow.focus();  
+  }
+
+function toOpenWindow(aWindow) {
+    aWindow.document.commandDispatcher.focusedWindow.focus();  
+}
+\end{verbatim}
+Spaces are not necessary inside brackets e.g. parameter lists, array subscripts.
+Prefer double quotes, except in in-line event handlers or when quoting with double quotes ie (‘he said, “trouble” ’).
+Have braces indented relative to their parent statement.
+\subsubsection{Code Style}
+Always put the else of an if-else statement on its own line.
+Both i++ and ++i should not be used.
+\subsubsection{Function and Varible Naming}
+Function names, local variables and object members have no prefix.
+Try to declare local variables as near to their use as possible; try to initialize every variable.
+
+\subsubsection{JavaScript Features}
+Make sure that your code doesn't generate any strict JavaScript warnings, such as:
+\begin{itemize}
+      	  \item{Duplicate variable declaration}
+      	  \item{Mixing return; with return value;}
+      	  \item{Trailing comma in JavaScript object declarations}
+\end{itemize}    	
+If you are unsure if an array value exists, compare the index to the array's length. If you are unsure if an object member exists, use "name" in aObject, or if you are expecting a particular type you may use typeof aObject.name == "function" (or whichever type you are expecting).
+Use { member: value, ... } to create a JavaScript object; a useful advantage over new Object() is the ability to create initial properties and use extended JavaScript syntax to define getters and setters.  If having defined a constructor you need to assign default properties it is preferred to assign an object literal to the prototype property. For example,
+
+\begin{verbatim}
+function SupportsString(data)
+{
+  this.data = data;
+}
+\end{verbatim}
+Do not compare booleans to true or false. For example, write if (ioService.offline). Compare objects to null, numbers to 0 or strings to "" if there is chance for confusion.
 \subsection{Install Documentation}
 \subsection{Algorithms, Data Structures, and Design Patterns}
 \subsection{Data Storage}
