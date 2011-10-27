@@ -1,4 +1,4 @@
-This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  26 OCT 2011 22:15
+This is pdfTeX, Version 3.1415926-2.3-1.40.12 (TeX Live 2011) (format=pdflatex 2011.7.3)  26 OCT 2011 23:05
 entering extended mode
  restricted \write18 enabled.
  %&-line parsing enabled.
@@ -208,12 +208,18 @@ Missing character: There is no â in font cmr12!
 Missing character: There is no € in font cmr12!
 Missing character: There is no ™ in font cmr12!
  [8] [9]
-Overfull \hbox (4.08182pt too wide) in paragraph at lines 265--266
-[]\OT1/cmr/m/n/12 Have the clients be able to dis-play in-for-ma-tion queried f
-rom the mon-goDB database
+Overfull \hbox (4.22203pt too wide) in paragraph at lines 276--277
+[]\OT1/cmr/m/n/12 Smooth com-mu-ni-ca-tion be-tween de-vices -- one de-vice com
+-mu-ni-cat-ing to an-other through
  []
 
-[10] (./intmd-report.aux) ) 
+[10]
+Overfull \hbox (17.33856pt too wide) in paragraph at lines 297--298
+[]\OT1/cmr/m/n/12 Node-mongodb-native (https://github.com/christkv/node-mongodb
+-native/) a node mod-
+ []
+
+[11] (./intmd-report.aux) ) 
 Here is how much of TeX's memory you used:
  779 strings out of 493633
  10769 string characters out of 3143378
@@ -221,17 +227,17 @@ Here is how much of TeX's memory you used:
  4129 multiletter control sequences out of 15000+200000
  8977 words of font info for 32 fonts, out of 3000000 for 9000
  831 hyphenation exceptions out of 8191
- 23i,6n,28p,1026b,189s stack positions out of 5000i,500n,10000p,200000b,50000s
+ 23i,6n,28p,1026b,233s stack positions out of 5000i,500n,10000p,200000b,50000s
 </usr/local/texlive/2011/texmf-dist/fonts/type1/publ
 ic/amsfonts/cm/cmbx12.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/publi
 c/amsfonts/cm/cmr12.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/public/
 amsfonts/cm/cmr17.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/public/am
 sfonts/cm/cmsy10.pfb></usr/local/texlive/2011/texmf-dist/fonts/type1/public/ams
 fonts/cm/cmtt12.pfb>
-Output written on intmd-report.pdf (10 pages, 85700 bytes).
+Output written on intmd-report.pdf (11 pages, 87959 bytes).
 PDF statistics:
- 57 PDF objects out of 1000 (max. 8388607)
- 39 compressed objects within 1 object stream
+ 60 PDF objects out of 1000 (max. 8388607)
+ 41 compressed objects within 1 object stream
  0 named destinations out of 1000 (max. 500000)
  1 words of extra memory for PDF output out of 10000 (max. 10000000)
 

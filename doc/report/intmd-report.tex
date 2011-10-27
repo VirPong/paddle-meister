@@ -219,8 +219,65 @@ The flexibility allowed by BSON documents will allow us to store variable amount
 \subsection{Testing and Verification}
 \section{Planning and Reflection}
 \subsection{Schedule}
+\begin{itemize}
+	\item Oct 7 -- A database implemented on the server.
+	\begin{itemize}
+		\item  Be able to have the server do a simple query from the mongoDB database and display it.
+		\item This goal was not met on time because the querying protocol was more complex than originally anticipated. It was completed by the following week.
+	\end{itemize}
+	\item Oct 7 -- Get the server up and running. 
+	\begin{itemize}
+		\item Be able to have a server that provides text or visual response to simple sample packets from other computers and relays sample information from the database.
+		\item This goal was met on time
+	\end{itemize}
+	\item Oct 11 -- Basic server communication to other devices. 
+	\begin{itemize}
+		\item Have a proof of concept for devices on the Android and iOS platforms to be able to communicate with the server. Have the clients be able to display information queried from the mongoDB database by communicating with the server.
+		\item This goal was not met on time due to unforseen difficulties in handling events. Was met within the week.
+	\end{itemize}
+	\item Oct 17 -- Simple game engine/logic working.
+	\begin{itemize}
+		\item Translate the rules of two-player (non-computer opponents) pong into JavaScript code that the server can use. Most likely will test on a browser such as Chrome or Chromium first.
+		\item This goal was not met on time because the code we were building out game logic around was difficult to understand, prompting various changes in the source of the programs game logic code.
+	\end{itemize}
+	\item Nov 4 -- Real-time game streaming on web browsers.
+	\begin{itemize}
+		\item Be able to watch a game that is happening between two other clients on a third client (most likely a browser at first
+		\item Dropped. We no longer believe we have the capacity to impliment streaming. We will instead devote our energies to the replay feature.
+	\end{itemize}
+	\item Nov 4 -- More robust communication between devices
+	\begin{itemize}
+		\item Sturdy and smooth communication for devices conversing through the server
+	\end{itemize}
+	\item Nov 11 -- Be able to replay a game using mongoDB stored information
+	\begin{itemize}
+		\item Read data stored in the main database and send it to the website interface to be viewed as a replay.
+	\end{itemize}
+	\item Nov 18 -- Track scores within a game
+	\begin{itemize}
+		\item During gameplay, incrementation of scores will be sent to the database in order to update the client's interface.
+	\end{itemize}
+	\item Nov 20 -- Generate a simple computer opponent
+	\begin{itemize}
+		\item Be able to play against an intelligent AI in 'practice mode.' The AI will do more than simply follow the ball.		
+	\end{itemize}
+	\item Dec 7 -- Fully functioning back end for Vir-Pong
+	\begin{itemize}
+		\item Have all functional requirements working optimally and all secondary features integrated in a finished product		
+	\end{itemize}
+\end{itemize}
 \subsection{Challenges}
+\begin{itemize}
+	\item Communication -- simple communication between the phones and server was incredibly challenging. Getting the communication to register on both the server and the phone took a great deal of debugging. Extra research yielding progress and allowed communication to flow smoothly.
+	\item Game logic -- the code used as a basis for game logic was not well documented and took a great deal of effort and time to understand the code's implementation, as well as how we could make use of it.
+\end{itemize}
 \subsection{Future milestones and Member Assignments}
+\begin{itemize}
+	\item Smooth communication between devices -- one device communicating to another through the server. Daniel will shoulder the primary responsibility and continue to work with the phone groups.
+	\item Polished game design -- adding finishing touches to game logic which include scores, timers, and computer opponents. Patrick and Ryan will continue to work on this project. 
+	\item Viewing replays -- the web browser interface will be able to view games played previously, as reverse engineered from player position. Shelby will work with the webUI team to continue working on this goal.
+\end{itemize}
+
 \section{References}
 \subsection{Git and Github}
 	\begin{itemize}
@@ -236,8 +293,11 @@ The flexibility allowed by BSON documents will allow us to store variable amount
 \subsubsection{MongoDB}
 	\begin{itemize}
 		\item MongoDB (http://mongodb.org/) is a scalable open-source non-relational database with strong node.js support.
+		\item mongojs (https://github.com/gett/mongojs) is a wrapper for node-mongodb-native that emulates the mongodb shell API
+		\item Node-mongodb-native (https://github.com/christkv/node-mongodb-native/) a node module used to facilitate connection between mongodb and node
 		\item Will be used as the main database for storing and retrieving game information.
 	\end{itemize}
+
 \subsubsection{Eclipse}
 	\begin{itemize}
 		\item Eclipse is an Integrated Development Environment written in Java that provides support for many different programming languages and version control systems through plugins -- A git plugin is available, called Egit (http://eclipse.org/egit/).
@@ -248,30 +308,4 @@ The flexibility allowed by BSON documents will allow us to store variable amount
 		\item Google Docs (http://docs.google.com/) is an online document processor with tools similar to Microsoft Word, Powerpoint, and others. It allows for collaboration between different users concurrently on the same document.
 		\item Will be used for collaboration on internal documents and documentation.
 	\end{itemize}
-\section{Schedule}
-\begin{itemize}
-	\item Oct 7 -- A database implemented on the server.
-	\begin{itemize}
-		\item  Be able to have the server do a simple query from the mongoDB database and display it.
-		\item 
-	\end{itemize}
-	\item Oct 7 -- Get the server up and running. 
-	\begin{itemize}
-		\item Be able to have a server that provides text or visual response to simple sample packets from other computers and relays sample information from the database.
-	\end{itemize}
-	\item Oct 11 -- Basic server communication to other devices. 
-	\begin{itemize}
-		\item Have a proof of concept for devices on the Android and iOS platforms to be able to communicate with the server. 
-		\item Have the clients be able to display information queried from the mongoDB database by communicating with the server.
-	\end{itemize}
-	\item Oct 17 -- Simple game engine/logic working.
-	\begin{itemize}
-		\item Translate the rules of two-player (non-computer opponents) pong into JavaScript code that the server can use.
-		\item Most likely will test on a browser such as Chrome or Chromium first.
-	\end{itemize}
-	\item Nov 4 -- Real-time game streaming on web browsers.
-	\begin{itemize}
-		\item Be able to watch a game that is happening between two other clients on a third client (most likely a browser at first
-	\end{itemize}
-\end{itemize}
 \end{document}
