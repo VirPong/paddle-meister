@@ -195,6 +195,10 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \end{itemize}
 These secondary features will bring out the performance and ability of our server and increase the game options Vir-Pong players are afforded. 
 \section{Domain Analysis}
+The domain of our problem consists largely of a client, game, and a lobby. We want the lobby, our conceptualization of a server, to connect clients to games.\\
+\includegraphics{DomAnaUML.eps} \\
+A client is recognized mainly by the device used in connecting with the lobby. This device is assigned a clientID by the lobby in order to track user interactions with the system. At any one point in time, a client can be either a player or an observer. A client can easily switch between these definitions, but will always retain their clientID while connected. Such is why we have made player and spectators conceptual classes of the generic class client. A theoretically infinite amount of spectators can observe a game, but only two players can play one game. The lobby that connects players and observers to games can host a theoretically infinite amount of games at any one given moment, but all games are tagged back to one lobby. Each game is associated with a single game state. This game state holds the positions of the paddles and the ball. The game state only exists during an instance of the game and, quite essentially, holds the state of a game. Our definition of a game state is the position of paddles and the ball. This game state builds a replay. Any number of spectators can watch any number of these replays. 
+
 \section{Implementation}
 \subsection{Style Guide}
 \subsubsection{Whitespace}
