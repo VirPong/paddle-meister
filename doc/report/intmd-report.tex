@@ -198,8 +198,8 @@ In the near future, devices will consist of modern browsers, Android platform ph
 
 %Will probably have lots of \newpage commands here.
 \subsection{System Sequence Diagram}
-Our highest priority use case was that of any client connected to the system. We have illustrated it in the following System Sequence Diagram. 
-\begin{center}\includegraphics{SSD for Server.pdf} \end{center} 
+Our highest priority use case was that of any client connected to the system. We have illustrated it in the following System Sequence Diagram. The diagram shows the client requesting a connection with the system, the system accepting that connection. The system proceeds to create a clientID to identifiy the client. The system then sends the clientID to the client along with a ready signal. The system then reports avaliable games to the client. 
+\begin{center}\includegraphics{SSD.pdf} \end{center} 
 \section{Nonfunctional Requirements}
 \begin{itemize}
 \item The desired communication time between a phone and server should be process and stored with less than a 75 nanosecond lag-time.
@@ -364,7 +364,7 @@ npm install mongojs
 \end{verbatim}
 
 \subsection{Algorithms, Data Structures, and Design Patterns}
-\subsection{Design Pattern}
+\subsubsection{Design Pattern}
 The node.js server framework is event-driven, so naturally design has been focused around creating and dealing with events.
 For example, there are connect, disconnect, updatePaddle, startGame, and other such events that are implemented both server- and client-side.
 
