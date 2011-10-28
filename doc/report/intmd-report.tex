@@ -27,23 +27,6 @@ In the near future, devices will consist of modern browsers, Android platform ph
 
 \subsection{Use Cases}
 
-\noindent \textbf{Scenario Title:}
-\textbf{Version:} \\
-\textbf{Actors:} \\
-\textbf{Pre-conditions:}\\
-\textbf{Post-conditions:}\\
-\textbf{Scenario:}\\
-\begin{enumerate}
-\item
-\end{enumerate}
-\textbf{Alternatives:}\\
-\textbf{1a.} 
-\begin{enumerate}
-\item
-\end{enumerate}
-\emph{Return}\\
-
-
 \noindent \textbf{Scenario Title:} Any client connecting to system.\\
 \textbf{Version:} 1.0\\
 \textbf{Actors:} Client, network\\
@@ -56,6 +39,33 @@ In the near future, devices will consist of modern browsers, Android platform ph
    \item System sends client its ID and ready signal.
    \item System sends client information about current available games.
 \end{enumerate}
+\textbf{Alternatives:}\\
+\textbf{1.} A client requests connection with system\\
+\textbf{1a.} Scheduled system down
+\begin{enumerate}
+\item Provide 48 hours notice of system going offline
+\item Client attempts to connect during system down
+\item System does not respond
+\item Client attempts to connect during system down
+\end{enumerate}
+\textbf{1b.} Unplanned system down
+\begin{enumerate}
+\item Client attempts to connect during system down
+\item System does not respond
+\end{enumerate}
+\textbf{2.} System accepts connection\\
+\textbf{2a.} System rejects client connection
+\begin{enumerate}
+\item System provides error
+\item System prompts client to attempt reconnection
+\end{enumerate}
+\textbf{5.} System sends client information about current available games.\\
+\textbf{5a.} There are no avaliable games
+\begin{enumerate}
+\item System prompts client to create new game
+\end{enumerate}
+
+
 
 \noindent \textbf{Scenario Title:} A client connecting to an open game.\\
 \textbf{Version:} 1.1\\
@@ -72,11 +82,13 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \item System transmits clients' paddle position, ball position, and score data back to client
 \end{enumerate}
 \textbf{Alternatives:}\\
+\textbf{2.} System opens communication between client and client already in open game.\\
 \textbf{2a.} Client in open game rejects system request to start game 
 \begin{enumerate}
 \item System informs client that request to join was denied
 \end{enumerate}
 \emph{Return to 1}\\
+\textbf{4.} The game starts.\\
 \textbf{4a.} A client disconnects from the system
 \begin{enumerate}
 \item System freezes game state
@@ -160,6 +172,7 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \item System informs client of score
 \end{enumerate}
 \textbf{Alternatives:}\\
+\textbf{9.} Game logic determines no collision\\
 \textbf{9a.} Game logic determines collision
 \begin{enumerate}
 \item Game logic recalibrates ball position based off of collision data
@@ -185,6 +198,8 @@ In the near future, devices will consist of modern browsers, Android platform ph
 
 %Will probably have lots of \newpage commands here.
 \subsection{System Sequence Diagram}
+Our highest priority use case was that of any client connected to the system. We have illustrated it in the following System Sequence Diagram. 
+\begin{center}\includegraphics{SSD for Server.pdf} \end{center} 
 \section{Nonfunctional Requirements}
 \begin{itemize}
 \item The desired communication time between a phone and server should be process and stored with less than a 75 nanosecond lag-time.
