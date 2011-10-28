@@ -36,6 +36,12 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \begin{enumerate}
 \item
 \end{enumerate}
+\textbf{Alternatives:}\\
+\textbf{1a.} 
+\begin{enumerate}
+\item
+\end{enumerate}
+\emph{Return}\\
 
 
 \noindent \textbf{Scenario Title:} Any client connecting to system.\\
@@ -43,7 +49,7 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \textbf{Actors:} Client, network\\
 \textbf{Pre-conditions:} Client has access to network, system is connected to network and accepting connections.\\
 \textbf{Post-conditions:} Client is connected to system and ready to start a new game or join an existing one.\\
-\textbf{Scenario:}\\
+\textbf{Scenario:}
 \begin{enumerate}
    \item Client requests connection with system.
    \item System accepts connection, assigns client a client ID.
@@ -51,22 +57,44 @@ In the near future, devices will consist of modern browsers, Android platform ph
    \item System sends client information about current available games.
 \end{enumerate}
 
-\subsubsection \noindent \textbf{Scenario Title:} A client connecting to an open game.\\
-\textbf{Version:}\\
-\textbf{Actors:}\\
-\textbf{Pre-conditions:}\\
-\textbf{Post-conditions:}\\
-\textbf{Scenario:}\\
+\noindent \textbf{Scenario Title:} A client connecting to an open game.\\
+\textbf{Version:} 1.1\\
+\textbf{Actors:} Two clients, game state\\
+\textbf{Pre-conditions:} Both clients have access to the network and are connected to the system and have been served the list of open games, one client is unpaired in an open game\\
+\textbf{Post-conditions:}Clients are ready to play a game together\\
+\textbf{Scenario:}
 \begin{enumerate}
-\item
+\item Client communicates to server which open game it wants to play.
+\item System opens communication between client and client already in open game.
+\item System initializes the game state.
+\item The game is started
+\item Paddle position is trasnmitted from client to the system
+\item System transmits clients' paddle position, ball position, and score data back to client
 \end{enumerate}
+\textbf{Alternatives:}\\
+\textbf{2a.} Client in open game rejects system request to start game 
+\begin{enumerate}
+\item System informs client that request to join was denied
+\end{enumerate}
+\emph{Return to 1}\\
+\textbf{4a.} A client disconnects from the system
+\begin{enumerate}
+\item System freezes game state
+\item System informs connected client of opponent disconnect
+\item System prompts disconnected client for reconnect
+\item System offers connected client to start new game
+\item Connected client accepts new game
+\item Game state is cleared
+\item System informs disconnected client of game end
+\end{enumerate}
+\emph{Return to 1}\\
 
 \noindent \textbf{Scenario Title:} Store player position in repository.\\
 \textbf{Version:} 1.0\\
 \textbf{Actors:} Client, system, repository, position tracker\\
 \textbf{Pre-conditions:} System operational, client participating in game\\
 \textbf{Post-conditions:} Game ends.\\
-\textbf{Scenario:}\\
+\textbf{Scenario:}
 \begin{enumerate}
 \item Client moves, position tracker sends data to system.
 \item System communicates updated position to repository.
@@ -82,7 +110,7 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \textbf{Actors:} Client1, Client2, Repository, Game Logic\\
 \textbf{Pre-conditions:} System Operational, Client1 and Client2 logged in and participating in game \\
 \textbf{Post-conditions:} Game continues\\
-\textbf{Scenario:}\\
+\textbf{Scenario:}
 \begin{enumerate}
 \item Client1 moves to hit the ball.
 \item Game logic determines ball movement.
@@ -101,7 +129,7 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \textbf{Actors:} Game Logic, Game repository, Interface\\
 \textbf{Pre-conditions:} System operational.\\
 \textbf{Post-conditions:} User interface shows a replay.\\
-\textbf{Scenario:}\\
+\textbf{Scenario:}
 \begin{enumerate}
 \item User chooses a game to watch.
 \item Game repository selects requested game.
@@ -112,23 +140,46 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \end{enumerate}
 
 \noindent \textbf{Scenario Title:} Two clients with simple reactions are playing a game until a winner is determined. \\
-\textbf{Version:}\\
-\textbf{Actors:}\\
-\textbf{Pre-conditions:}\\
-\textbf{Post-conditions:}\\
-\textbf{Scenario:}\\
+\textbf{Version:}2.0\\
+\textbf{Actors:} Two clients, game logic\\
+\textbf{Pre-conditions:} System operationa, two clients connected to system, clients prepared to start game\\
+\textbf{Post-conditions:} The game is complete\\
+\textbf{Scenario:}
 \begin{enumerate}
-\item
+\item System pairs users
+\item Game logic sets players and ball at default positions
+\item System informs clients of game start
+\item Game logic starts ball movement
+\item System sends ball movement to both users
+\item System recieves position data information from client
+\item System informs game logic of movement
+\item System sends position data to other client
+\item Game logic determines no collision
+\item User recieves a point\\ 
+ \emph{Repeat 4 - 10 until score limit}
+\item System informs client of score
 \end{enumerate}
+\textbf{Alternatives:}\\
+\textbf{9a.} Game logic determines collision
+\begin{enumerate}
+\item Game logic recalibrates ball position based off of collision data
+\item Game logic sends ball position to system
+\end{enumerate}
+\emph{Return to 5}\\
+
 
 \noindent \textbf{Scenario Title:} Client plays against an artificially generated opponent.\\
-\textbf{Version:}\\
-\textbf{Actors:}\\
-\textbf{Pre-conditions:}\\
-\textbf{Post-conditions:}\\
-\textbf{Scenario:}\\
+\textbf{Version:}1.0\\
+\textbf{Actors:} Client, game logic\\
+\textbf{Pre-conditions:} Client has access to the network and is connected to the system\\
+\textbf{Post-conditions:} Client is playing a game with artificial opponent\\
+\textbf{Scenario:}
 \begin{enumerate}
-\item
+\item Client asks for offline game
+\item System informs game logic of offline game
+\item Client chooses opponent difficulty
+\item Game logic generates artificial player's movement patterns
+\item System prompts game start
 \end{enumerate}
 
 
@@ -279,8 +330,8 @@ Then install MongoDB using the synaptic package manager (Debian-based Linux dist
 sudo apt-get install mongodb
 \end{verbatim}
 
-After looking over this open-source module, we determined that node-mongodb-native (https://github.com/christkv/node-mongodb-native) was perfectly suited for our project. This module facilitates a connection between mongodb and our server, which uses node. However, we ran into a compilation error when attempting to run example code, complaining of the native bson parser not being compiled.
-In searching for a solution, we were pointed to another module for mongodb, called mongojs (https://github.com/gett/mongojs). Mongojs is actually a wrapper for mongodb-native that allows code to be written in a format almost identical to the mongodb shell API. This allows the code to be condense and clear.
+After looking over this open-source module, we determined that node-mongodb-native was perfectly suited for our project. This module facilitates a connection between mongodb and our server, which uses node. However, we ran into a compilation error when attempting to run example code, complaining of the native bson parser not being compiled.
+In searching for a solution, we were pointed to another module for mongodb, called mongojs. Mongojs is actually a wrapper for mongodb-native that allows code to be written in a format almost identical to the mongodb shell API. This allows the code to be condense and clear.
 We retrieved node-mongodb-native from github and mongojs was installed via npm with the shell command:
 \begin{verbatim}
 npm install mongojs
@@ -290,10 +341,10 @@ npm install mongojs
 \subsection{Data Storage}
 The data we’re storing is specific to games and the players of each. This data is limited to usernames, player positions, gameIDs, and scores. This information will be stored in the noSQL database, mongodb. We choose to use mongodb because it is not only better for real-time, online, multi-player applications, but it has a loose schema that allows us to change the size and information of each document as we will.
 
-This information will be placed in one collection replays. The replays collection in our database will hold game positions and collision data so that we can reverse engineer games as ‘replays’ by pulling out the position data of players and applying current game logic.
+This information will be placed in one collection replays. The replays collection in our database will hold game positions and collision data so that we can reverse engineer games as ‘replays’ by pulling out the position data of players and applying current game logic. \\
 
 %The E/R Diagram
-\includegraphics{ERdia.eps}
+\includegraphics{ERdia.eps} \\
 
 
 This diagram is loosely modeled off of an E/R diagram. There are two main classes (player and game), and an association complete with a class between them (position). Player is a repository of information that we will communicate with regarding user identity and later update with score information. Our data’s interactions with player class will be minimal but essential for some of the web user interface secondary features, which including information tracking. There can be as little as no players a game up to two, and the position is only important for non-computer players. The game section of the document will hold the gameID and a boolean status of whether or not the game is current, these pieces of information will be added to every game played to ensure better tracking. The boolean ‘current’ will be set from true to false on all documents composing the game when the game ends. The game will also keep track of scores when they are initialized and whenever they are updated.
@@ -403,12 +454,12 @@ The flexibility allowed by BSON documents will allow us to store variable amount
 		\item Github (http://github.com/) is a web-based hosting service for projects using git. It provides collaboration tools and many other features such as pull requests and commit management that helps small development groups work efficiently.
 		\item The current project repository is hosted on github and collaboration will happen through the web-based UI.
 	\end{itemize}
-\subsubsection{node.js}
+\subsection{node.js}
 	\begin{itemize}
 		\item node.js (http://nodejs.org/) is an easy-to-learn server-side JavaScript server development environment that supports a myriad of different communication protocols such as HTTP, TCP, and WebSockets.
 		\item Will be used as the framework for the server.
 	\end{itemize}
-\subsubsection{MongoDB}
+\subsection{MongoDB}
 	\begin{itemize}
 		\item MongoDB (http://mongodb.org/) is a scalable open-source non-relational database with strong node.js support.
 		\item mongojs (https://github.com/gett/mongojs) is a wrapper for node-mongodb-native that emulates the mongodb shell API
@@ -416,12 +467,12 @@ The flexibility allowed by BSON documents will allow us to store variable amount
 		\item Will be used as the main database for storing and retrieving game information.
 	\end{itemize}
 
-\subsubsection{Eclipse}
+\subsection{Eclipse}
 	\begin{itemize}
 		\item Eclipse is an Integrated Development Environment written in Java that provides support for many different programming languages and version control systems through plugins -- A git plugin is available, called Egit (http://eclipse.org/egit/).
 		\item Most team members will be using Eclipse IDE for development.
 	\end{itemize}
-\subsubsection{Google Docs}
+\subsection{Google Docs}
 	\begin{itemize}
 		\item Google Docs (http://docs.google.com/) is an online document processor with tools similar to Microsoft Word, Powerpoint, and others. It allows for collaboration between different users concurrently on the same document.
 		\item Will be used for collaboration on internal documents and documentation.
