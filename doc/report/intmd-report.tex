@@ -358,6 +358,7 @@ sudo apt-get install mongodb
 After looking over this open-source module, we determined that node-mongodb-native was perfectly suited for our project. This module facilitates a connection between mongodb and our server, which uses node. However, we ran into a compilation error when attempting to run example code, complaining of the native bson parser not being compiled.
 In searching for a solution, we were pointed to another module for mongodb, called mongojs. Mongojs is actually a wrapper for mongodb-native that allows code to be written in a format almost identical to the mongodb shell API. This allows the code to be condense and clear.
 We retrieved node-mongodb-native from github and mongojs was installed via npm with the shell command:
+
 \begin{verbatim}
 npm install mongojs
 \end{verbatim}
@@ -365,6 +366,7 @@ npm install mongojs
 \subsection{Algorithms, Data Structures, and Design Patterns}
 \subsection{Design Pattern}
 The node.js server framework is event-driven, so naturally design has been focused around creating and dealing with events.
+For example, there are connect, disconnect, updatePaddle, startGame, and other such events that are implemented both server- and client-side.
 
 \subsection{Data Storage}
 The data we’re storing is specific to games and the players of each. This data is limited to usernames, player positions, gameIDs, and scores. This information will be stored in the noSQL database, mongodb. We choose to use mongodb because it is not only better for real-time, online, multi-player applications, but it has a loose schema that allows us to change the size and information of each document as we will.
@@ -414,6 +416,13 @@ var p2Miss = {gameID: Stringnums,
 \end{verbatim}
 The flexibility allowed by BSON documents will allow us to store variable amounts of data at any one given point. MongoDB also has quick information retrieval, allowing us to quickly go back through stored documents upon updating and input.
 \subsection{Testing and Verification}
+
+The method used to test our database connection code has primarily consisted of unit testing on the server machine. By using the node-mongodb-native module, any .js files that have calls to the mongodb in them can be run and tested simply by using the ‘node’ command before the file name. Primarily print statements (or, in this case sys.puts(‘ ’); statements) were used to track logical errors. Any compilation on runtime errors were sorted out by referencing the mongodb manuals (as mongojs allows us to write database calls in the mongodb native API) and javascript tutorials. Future integration testing will likely use computer controlled players in games to test data input into the database. After that it will be tested using real player from device inputs.
+
+The method used to test the pong game logic was through the JSBin website. JSBin allows for real time viewing of javascript code and reports errors and warnings in the code as well. From here the server team was able make changes to the code and see how it immediately effected the game logic. JSBin has allowed for learning javascript easier and testing code more efficient.
+
+Server networking was tested primarily with Google Chrome’s JavaScript inspector, as well as the node.js debug mode. There was, of course, plenty of trial-and-error.
+
 \section{Planning and Reflection}
 \subsection{Schedule}
 \begin{itemize}
@@ -490,6 +499,8 @@ The flexibility allowed by BSON documents will allow us to store variable amount
 	\begin{itemize}
 		\item node.js (http://nodejs.org/) is an easy-to-learn server-side JavaScript server development environment that supports a myriad of different communication protocols such as HTTP, TCP, and WebSockets.
 		\item Will be used as the framework for the server.
+		\item express (http://expressjs.com/) is a dead-simple web server application written in node.js.
+		\item Socket.io (http://socket.io/) is a cross-platform websocket implementation written in JavaScript for server and client that reverts to Flash and AJAX if WebSockets are not enabled on a certain platform.
 	\end{itemize}
 \subsection{MongoDB}
 	\begin{itemize}
@@ -513,9 +524,12 @@ The flexibility allowed by BSON documents will allow us to store variable amount
 \begin{itemize}
 \item An tutorial (http://www.w3schools.com/js/default.asp) used to learn Javascript and compare against compilation errors.
 \end{itemize}
-\subsection{Pong Game}
+
+\subsection{Reference Code}
+
 \begin{itemize}
 \item The pong file that was modified in order to build the game logic of the pong game (https://github.com/garrettdieckmann/human-pong/blob/master/WebUI/site/http/simppong.html)
+\item Bits and pieces of Osmus (https://github.com/borismus/osmus) and NodePong (https://github.com/meetar/NodePong) were used in creating a functional networking framework.
 \end{itemize}
 \subsection{Javascript Style Guide}
 \begin{itemize}
@@ -524,5 +538,5 @@ The flexibility allowed by BSON documents will allow us to store variable amount
 \end{document}
 \subsection{JSBin}
 \begin{itemize}
-\item JS Bin (http://jsbin.com/odiyej/38/edit) allows you to edit and test JavaScript and HTML (reloading the URL also maintains the state of your code - new tabs doesn’t). Once you’re happy you can save, and send the URL to a peer for review or help. They can then make further changes saving a new if required
+\item JS Bin (http://jsbin.com/odiyej/38/edit) allows for editing and testing of JavaScript and HTML, and includes collaborative functionality. 
 \end{itemize}
