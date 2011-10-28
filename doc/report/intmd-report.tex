@@ -1,5 +1,7 @@
 \documentclass[letterpaper,12pt]{article}
 \usepackage{geometry}
+%package to include figures with .eps extension
+\usepackage{graphics}
 \geometry{paper=letterpaper,
                        body={6.50in, 9.00in},
                        lmargin=1.00in,
@@ -290,7 +292,9 @@ The data we’re storing is specific to games and the players of each. This data
 
 This information will be placed in one collection replays. The replays collection in our database will hold game positions and collision data so that we can reverse engineer games as ‘replays’ by pulling out the position data of players and applying current game logic.
 
-    [Here will be E/R diagram]
+%The E/R Diagram
+\includegraphics{ERdia.eps}
+
 
 This diagram is loosely modeled off of an E/R diagram. There are two main classes (player and game), and an association complete with a class between them (position). Player is a repository of information that we will communicate with regarding user identity and later update with score information. Our data’s interactions with player class will be minimal but essential for some of the web user interface secondary features, which including information tracking. There can be as little as no players a game up to two, and the position is only important for non-computer players. The game section of the document will hold the gameID and a boolean status of whether or not the game is current, these pieces of information will be added to every game played to ensure better tracking. The boolean ‘current’ will be set from true to false on all documents composing the game when the game ends. The game will also keep track of scores when they are initialized and whenever they are updated.
 
