@@ -196,7 +196,7 @@ In the near future, devices will consist of modern browsers, Android platform ph
 These secondary features will bring out the performance and ability of our server and increase the game options Vir-Pong players are afforded. 
 \section{Domain Analysis}
 The domain of our problem consists largely of a client, game, and a lobby. We want the lobby, our conceptualization of a server, to connect clients to games.\\
-\includegraphics{DomAnaUML.eps} \\
+\begin{center}\includegraphics{DomAnaUML.eps} \end{center} 
 A client is recognized mainly by the device used in connecting with the lobby. This device is assigned a clientID by the lobby in order to track user interactions with the system. At any one point in time, a client can be either a player or an observer. A client can easily switch between these definitions, but will always retain their clientID while connected. Such is why we have made player and spectators conceptual classes of the generic class client. A theoretically infinite amount of spectators can observe a game, but only two players can play one game. The lobby that connects players and observers to games can host a theoretically infinite amount of games at any one given moment, but all games are tagged back to one lobby. Each game is associated with a single game state. This game state holds the positions of the paddles and the ball. The game state only exists during an instance of the game and, quite essentially, holds the state of a game. Our definition of a game state is the position of paddles and the ball. This game state builds a replay. Any number of spectators can watch any number of these replays. 
 
 \section{Implementation}
@@ -242,8 +242,13 @@ Have braces indented relative to their parent statement.
 Always put the else of an if-else statement on its own line.
 Both i++ and ++i should not be used.
 \subsubsection{Function and Varible Naming}
-Function names, local variables and object members have no prefix.
-Try to declare local variables as near to their use as possible; try to initialize every variable.
+\begin{itemize}
+\item Global variables should be prefixed with the letter g, e.g. var gFormatToolbar;
+\item Arguments (parameter names) should be prefixed with the letter a.
+\item Event handler functions should be prefixed with the word "on".
+\item Function names, local variables and object members have no prefix.
+\item Try to declare local variables as near to their use as possible; try to initialize every variable.
+\end{itemize}
 
 \subsubsection{JavaScript Features}
 Make sure that your code doesn't generate any strict JavaScript warnings, such as:
@@ -253,7 +258,7 @@ Make sure that your code doesn't generate any strict JavaScript warnings, such a
       	  \item{Trailing comma in JavaScript object declarations}
 \end{itemize}    	
 If you are unsure if an array value exists, compare the index to the array's length. If you are unsure if an object member exists, use "name" in aObject, or if you are expecting a particular type you may use typeof aObject.name == "function" (or whichever type you are expecting).
-Use { member: value, ... } to create a JavaScript object; a useful advantage over new Object() is the ability to create initial properties and use extended JavaScript syntax to define getters and setters.  If having defined a constructor you need to assign default properties it is preferred to assign an object literal to the prototype property. For example,
+Use \{ member: value, ... \} to create a JavaScript object; a useful advantage over new Object() is the ability to create initial properties and use extended JavaScript syntax to define getters and setters.  If having defined a constructor you need to assign default properties it is preferred to assign an object literal to the prototype property. For example,
 
 \begin{verbatim}
 function SupportsString(data)
@@ -262,6 +267,7 @@ function SupportsString(data)
 }
 \end{verbatim}
 Do not compare booleans to true or false. For example, write if (ioService.offline). Compare objects to null, numbers to 0 or strings to "" if there is chance for confusion.
+
 \subsection{Install Documentation}
 \subsubsection{Server}
 Requirements:
@@ -342,6 +348,9 @@ npm install mongojs
 \end{verbatim}
 
 \subsection{Algorithms, Data Structures, and Design Patterns}
+\subsection{Design Pattern}
+The node.js server framework is event-driven, so naturally design has been focused around creating and dealing with events.
+
 \subsection{Data Storage}
 The data we’re storing is specific to games and the players of each. This data is limited to usernames, player positions, gameIDs, and scores. This information will be stored in the noSQL database, mongodb. We choose to use mongodb because it is not only better for real-time, online, multi-player applications, but it has a loose schema that allows us to change the size and information of each document as we will.
 
@@ -439,17 +448,21 @@ The flexibility allowed by BSON documents will allow us to store variable amount
 		\item Have all functional requirements working optimally and all secondary features integrated in a finished product		
 	\end{itemize}
 \end{itemize}
+
 \subsection{Challenges}
 \begin{itemize}
-	\item Communication -- simple communication between the phones and server was incredibly challenging. Getting the communication to register on both the server and the phone took a great deal of debugging. Extra research yielding progress and allowed communication to flow smoothly.
-	\item Game logic -- the code used as a basis for game logic was not well documented and took a great deal of effort and time to understand the code's implementation, as well as how we could make use of it.
+	\item Communication -- simple communication between the phones and server was incredibly challenging. Getting the communication to register on both the server and the phone took a great deal of debugging. Extra research yielding progress and allowed communication to flow smoothly. In retrospect, it would have probably been beneficial to just pick the most documented and widely-used communication library and worked through it. That being said, the current communication library has been working well since we broke through the "wall" of problems.
+	\item Game logic -- the code used as a basis for game logic was not well documented and took a great deal of effort and time to understand the code's implementation, as well as how we could make use of it. It would have probably been better to just write the game logic from scratch, which would not have been too hard since pong was one of the first arcade games ever made.
+	
 \end{itemize}
+
 \subsection{Future milestones and Member Assignments}
 \begin{itemize}
 	\item Smooth communication between devices -- one device communicating to another through the server. Daniel will shoulder the primary responsibility and continue to work with the phone groups.
 	\item Polished game design -- adding finishing touches to game logic which include scores, timers, and computer opponents. Patrick and Ryan will continue to work on this project. 
 	\item Viewing replays -- the web browser interface will be able to view games played previously, as reverse engineered from player position. Shelby will work with the webUI team to continue working on this goal.
 \end{itemize}
+
 
 \section{References}
 \subsection{Git and Github}
