@@ -17,30 +17,50 @@ io.set('log level', 1); // reduce logging
 //SESSIONS
 //var sessions = []; // list of all sessions
 
-//Arrays for spectators and players.
-var spectators = [];
-var players = [];
+var clients = [];
+var games = [];
 
-var paddlePos;
-var ballPos;
+function game(gameID){
+  this.gameID = gameID;
+  this.players = [];
+  this.spectators = [];
+  this.gameRunning = false;
+  this.paddlePos = [50,50];
+  this.ballPos = [50,50];
 
-// Helper function to send to a client.
-function sendGameState(){
-  io.sockets.emit('updateGame', {paddle: paddlePos, ball: ballPos});
-}
+  this.join = function(player){
+    this.players.push(player);
+  };
+  
+  this.spectate = function(spectator){
+    this.spectators.push(spectator);
+  };
 
-//Temporary function to play game.
-function startGame(){
-setInterval(function() {
-    //For every player, send the game state.
-    for(p in players){
-      sendGameState(p); 
-    }
-    for(s in spectators){
-      sendGameState(s);
-    }
-  }, 50);
-}
+  //Temporary function to play game.
+  this.startGame = function(){
+    setInterval(function() {
+      //For every player, send the game state.
+      for(p in players){
+        sendGameState(p); 
+      }
+      for(s in spectators){
+        sendGameState(s);
+      }
+    }, 50);
+  }; 
+
+
+  // Helper function to send to a client.
+  this.sendGameState = function(socket){
+    io.socket.emit('updateGame', {paddle: paddlePos, ball: ballPos});
+  };
+
+  this.updatePaddle = function(player, data){
+    paddlePos[playerNum] = data.pos; 
+    console.log("Player " + (playerNum + 1) + " pos:" + data.pos);
+  };
+};
+
 
 //Temporary function to initialize game.
 function initGame(){
@@ -53,44 +73,39 @@ function initGame(){
 //when someone connects
 io.sockets.on('connection', function (client) {
   console.log("Client connecting.");
-  var clientType; 
-  var playerNum;
+  clients.push(client);
 
-  //socket.emit('news', { hello: 'world', foo:'bar' });
-  client.on('clientType', function(data) {
-     console.log(data.type);
+  var clientType; 
+  var currGame;
+  socket.emit('gameList', {list: games});
+
+  client.on('startGame', function(data){
+    games.push(new game(client, data.ID));
+  });
+ 
+  client.on('joinGame', function(data) {
+        
+     currGame = games[data.gameIndex];
      clientType = data.type;
 
      //Determine which list to add the client to.
      if(clientType == 'spectator'){
-	spectators.push(client);
-	console.log('Spectator!');
+	currGame.spectate(client);
+	console.log('Game ' + currGame.gameID + " spectator!");
      }
      if(clientType == 'player'){
-	if(players.length == 0){
-	  playerNum = 0;
-	} else {
-	  playerNum = 1;
-	}
-	players.push(client);
-	client.emit('paddleNum', {paddleNum: playerNum});
-	console.log('Player!');
+	currGame.join(client);
+	console.log('Game ' + currGame.gameID + " spectator!");
      }
-     	
-     
-     //Temporary for TESTING
-     initGame();
-     startGame();
-
-     if(players.length == 2){
-	initGame();
-     }	
   });
 
   client.on('updatePaddle', function(data) {
     //update the value of particular paddle position.
-    paddlePos[playerNum] = data.pos; 
-    console.log("Player " + (playerNum + 1) + " pos:" + data.pos);
+    currGame.updatePaddle(client, data); 
+  });
+
+  client.on('disconnect', function(data) {
+    //remove client from any lists?
   });
 });
 
