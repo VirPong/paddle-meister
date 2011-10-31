@@ -23,6 +23,10 @@ var players = [];
 
 var paddlePos;
 var ballPos;
+var ballV;
+var score;
+var fieldSize;
+var paddleSize;
 
 // Helper function to send to a client.
 function sendGameState(){
@@ -32,6 +36,7 @@ function sendGameState(){
 //Temporary function to play game.
 function startGame(){
 setInterval(function() {
+    ballLogic();
     //For every player, send the game state.
     for(p in players){
       sendGameState(p); 
@@ -42,11 +47,60 @@ setInterval(function() {
   }, 50);
 }
 
+function ballLogic(){
+
+  //Ball bouncing logic
+  
+  if( ballPos[1]<0 || ballPos[1]>fieldSize[1]){
+    ballV[1] = -ballV[1]; //change ballPos[1] direction if you go off screen....
+  }
+  
+  // Paddle Boundary Logic
+  
+  // changed all these numbers to more reasonable also, these kinda stuff should also be fields but we can
+  // think about that later
+  
+  if((ballPos[0] <= 10) && (ballPos[0] > 5) && (ballPos[1] > paddlePos[0]) && (ballPos[1] < (paddlePos[0] + paddleSize[0]))){ //if it hits the left paddle
+    ballV[0] = -1.1*ballV[0]; //get faster after you hit it
+  }
+  if((ballPos[0] >= fieldSize[0] - 10) && (ballPos[0] <= fieldSize[0] - 5) && (ballPos[1] >= paddlePos[1]) && (ballPos[1] <= (paddlePos[1] + paddleSize[0]))){ //if it hits the right paddle
+    ballV[0] = -1.1*ballV[0];
+  }
+  
+  // if ball goes out of frame reset in the middle and put to default speed and increment score...
+  
+  if(ballPos[0] < -40){ //changed these numbers you had old ones so ball was going super far out of frame
+    ballPos[0] = fieldSize[0]/2;
+    ballPos[1] = fieldSize[1]/2;
+    ballV[0] = 1;
+    ballV[1] = 2;
+    score[1]++;
+    //sendScore();
+  }
+  if(ballPos[0] > 250){ //changed these numbers you had old ones so ball was going super far out of frame
+    ballPos[0] = fieldSize[0]/2;
+    ballPos[1] = fieldSize[1]/2;
+    ballV[0] = 1;
+    ballV[1] = 2;
+    score[0]++;
+    //sendScore();
+  }
+  
+  ballPos[0]+=ballV[0];
+  ballPos[1]+=ballV[1];
+}
+
 //Temporary function to initialize game.
 function initGame(){
   console.log("Game initializing!");
   paddlePos = [50,50];
   ballPos = [50,50];
+  score = [0,0];
+  fieldSize = [137,76];
+  ballV = [1,2];
+  ballR = (1/20)*fieldSize[1];
+  //height, width
+  paddleSize = [(1/10)*fieldSize[0], (1/20)*fieldSize[1]];
   //Other game initialization stuff that's really important/cool.
 }
 
@@ -58,7 +112,6 @@ io.sockets.on('connection', function (client) {
 
   //socket.emit('news', { hello: 'world', foo:'bar' });
   client.on('clientType', function(data) {
-     console.log(data.type);
      clientType = data.type;
 
      //Determine which list to add the client to.
@@ -83,7 +136,7 @@ io.sockets.on('connection', function (client) {
      startGame();
 
      if(players.length == 2){
-	initGame();
+//	initGame();
      }	
   });
 
