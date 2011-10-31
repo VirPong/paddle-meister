@@ -28,6 +28,17 @@ var score;
 var fieldSize;
 var paddleSize;
 
+console.log("
+ _______  _______  _        _______ 
+(  ____ )(  ___  )( (    /|(  ____ \
+| (    )|| (   ) ||  \  ( || (    \/
+| (____)|| |   | ||   \ | || |      
+|  _____)| |   | || (\ \) || | ____ 
+| (      | |   | || | \   || | \_  )
+| )      | (___) || )  \  || (___) |
+|/       (_______)|/    )_)(_______)
+");
+
 // Helper function to send to a client.
 function sendGameState(){
   io.sockets.emit('updateGame', {paddle: paddlePos, ball: ballPos});
@@ -46,6 +57,9 @@ setInterval(function() {
     }
   }, 50);
 }
+
+
+//BALL LOGIC FROM WWW
 
 function ballLogic(){
 
