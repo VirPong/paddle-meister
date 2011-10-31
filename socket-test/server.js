@@ -28,16 +28,6 @@ var score;
 var fieldSize;
 var paddleSize;
 
-console.log("
- _______  _______  _        _______ 
-(  ____ )(  ___  )( (    /|(  ____ \
-| (    )|| (   ) ||  \  ( || (    \/
-| (____)|| |   | ||   \ | || |      
-|  _____)| |   | || (\ \) || | ____ 
-| (      | |   | || | \   || | \_  )
-| )      | (___) || )  \  || (___) |
-|/       (_______)|/    )_)(_______)
-");
 
 // Helper function to send to a client.
 function sendGameState(){
@@ -58,6 +48,10 @@ setInterval(function() {
   }, 50);
 }
 
+function sendScore(){
+ //Still sending to everyone.
+ io.sockets.emit('sendScore', { data: score });
+}
 
 //BALL LOGIC FROM WWW
 
@@ -66,7 +60,7 @@ function ballLogic(){
   //Ball bouncing logic
   
   if( ballPos[1]<0 || ballPos[1]>fieldSize[1]){
-    ballV[1] = -ballV[1]; //change ballPos[1] direction if you go off screen....
+    ballV[1] = -ballV[1]; //change ballPos[1] direction if you go off screen in y direction ....
   }
   
   // Paddle Boundary Logic
@@ -75,29 +69,29 @@ function ballLogic(){
   // think about that later
   
   if((ballPos[0] <= 10) && (ballPos[0] > 5) && (ballPos[1] > paddlePos[0]) && (ballPos[1] < (paddlePos[0] + paddleSize[0]))){ //if it hits the left paddle
-    ballV[0] = -1.1*ballV[0]; //get faster after you hit it
+    ballV[0] = -ballV[0]; //get faster after you hit it
   }
   if((ballPos[0] >= fieldSize[0] - 10) && (ballPos[0] <= fieldSize[0] - 5) && (ballPos[1] >= paddlePos[1]) && (ballPos[1] <= (paddlePos[1] + paddleSize[0]))){ //if it hits the right paddle
-    ballV[0] = -1.1*ballV[0];
+    ballV[0] = -ballV[0];
   }
   
   // if ball goes out of frame reset in the middle and put to default speed and increment score...
   
-  if(ballPos[0] < -40){ //changed these numbers you had old ones so ball was going super far out of frame
+  if(ballPos[0] < -10){ //changed these numbers you had old ones so ball was going super far out of frame
     ballPos[0] = fieldSize[0]/2;
     ballPos[1] = fieldSize[1]/2;
     ballV[0] = 1;
     ballV[1] = 2;
     score[1]++;
-    //sendScore();
+    sendScore();
   }
-  if(ballPos[0] > 250){ //changed these numbers you had old ones so ball was going super far out of frame
+  if(ballPos[0] >fieldSize[0] +10 ){ //changed these numbers you had old ones so ball was going super far out of frame
     ballPos[0] = fieldSize[0]/2;
     ballPos[1] = fieldSize[1]/2;
     ballV[0] = 1;
     ballV[1] = 2;
     score[0]++;
-    //sendScore();
+    sendScore();
   }
   
   ballPos[0]+=ballV[0];
@@ -110,11 +104,11 @@ function initGame(){
   paddlePos = [50,50];
   ballPos = [50,50];
   score = [0,0];
-  fieldSize = [137,76];
+  fieldSize = [100,100];
   ballV = [1,2];
   ballR = (1/20)*fieldSize[1];
   //height, width
-  paddleSize = [(1/10)*fieldSize[0], (1/20)*fieldSize[1]];
+  paddleSize = [(1/5)*fieldSize[0], (1/15)*fieldSize[1]];
   //Other game initialization stuff that's really important/cool.
 }
 
@@ -133,7 +127,7 @@ io.sockets.on('connection', function (client) {
 	spectators.push(client);
 	console.log('Spectator!');
      }
-     if(clientType == 'player'){
+     if(clientType == 'player' && players.length != 2){
 	if(players.length == 0){
 	  playerNum = 0;
 	} else {
@@ -141,16 +135,15 @@ io.sockets.on('connection', function (client) {
 	}
 	players.push(client);
 	client.emit('paddleNum', {paddleNum: playerNum});
-	console.log('Player!');
+	console.log('Player ' + playerNum  + '!');
      }
      	
      
      //Temporary for TESTING
-     initGame();
-     startGame();
 
      if(players.length == 2){
-//	initGame();
+	initGame();
+	startGame();
      }	
   });
 
@@ -159,6 +152,7 @@ io.sockets.on('connection', function (client) {
     paddlePos[playerNum] = data.pos; 
     console.log("Player " + (playerNum + 1) + " pos:" + data.pos);
   });
+
 });
 
 
