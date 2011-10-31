@@ -1,4 +1,4 @@
-/* Server.js for Vir-Pong, Inc */
+/* Server.js v.0.2 for Vir-Pong, Inc */
 /* Daniel Guilak -- daniel.guilak@gmail.com */
 
 var PORT = 3000;
@@ -14,53 +14,64 @@ app.listen(PORT);
 //set the sockets to listen on same port.
 var io = sio.listen(app);
 io.set('log level', 1); // reduce logging
-//SESSIONS
-//var sessions = []; // list of all sessions
 
-//Arrays for spectators and players.
-var spectators = [];
-var players = [];
+/* Variable declarations */
+var gSpectators = [];
+var gPlayers = [];
 
-var paddlePos;
-var ballPos;
-var ballV;
-var score;
-var fieldSize;
-var paddleSize;
+var gPaddlePos; // [player1, player2] height position.
+var gBallPos;   // [ballX, ballY] ball positions.
+var gBallV;	// [ballVX, ballVY] ball velocities. 
+var gBallR;	// The ball radius (currently not in implementation)
+var gScore;	// [scorePlayer1, scorePlayer2] player scores.
+var gFieldSize; // [fieldX, fieldY] size of the game field.
+var gPaddleSize;// [paddleHeight, paddleWidth]
 
+/*
+Helper function to send the game state to all connected clients.
 
-// Helper function to send to a client.
+This will soon be phased out to support multiple game instances.
+
+Emits updateGame node event with paddle and ball position arrays.
+*/
 function sendGameState(){
-  io.sockets.emit('updateGame', {paddle: paddlePos, ball: ballPos});
+  io.sockets.emit('onUpdateGame', {paddle: gPaddlePos, ball: gBallPos});
 }
 
-//Temporary function to play game.
+/* This is the main game loop that is set to run every 50 ms. */
 function startGame(){
 setInterval(function() {
-    ballLogic();
+    ballLogic(); //Run ball logic simulation.
+    sendGameState(); //Send game state to all sockets.
+
+    //THIS CODE will be phased in soon.
     //For every player, send the game state.
-    for(p in players){
-      sendGameState(p); 
-    }
-    for(s in spectators){
-      sendGameState(s);
-    }
+    // for(p in gPlayers){
+    //  sendGameState(p); 
+    //}
+    //for(s in gSpectators){
+    //  sendGameState(s);
+    //}
   }, 50);
 }
 
+/* Sends an onSendScore event to all connected clients (will be phased out soon for a more
+modular approach */
 function sendScore(){
  //Still sending to everyone.
- io.sockets.emit('sendScore', { data: score });
+ io.sockets.emit('onSendScore', { data: gScore });
 }
 
-//BALL LOGIC FROM WWW
+/*
+ This ball logic code originated from David Eva, slightly modified for use on the server. Needs tweaking.
+*/ 
 
 function ballLogic(){
 
   //Ball bouncing logic
   
-  if( ballPos[1]<0 || ballPos[1]>fieldSize[1]){
-    ballV[1] = -ballV[1]; //change ballPos[1] direction if you go off screen in y direction ....
+  if( gBallPos[1]<0 || gBallPos[1]>gFieldSize[1]){
+    gBallV[1] = -gBallV[1]; //change gBallPos[1] direction if you go off screen in y direction ....
   }
   
   // Paddle Boundary Logic
@@ -68,142 +79,98 @@ function ballLogic(){
   // changed all these numbers to more reasonable also, these kinda stuff should also be fields but we can
   // think about that later
   
-  if((ballPos[0] == 10) && (ballPos[1] > paddlePos[0] - 3) && (ballPos[1] < (paddlePos[0] + paddleSize[0] + 3))){ //if it hits the left paddle
-    ballV[0] = -ballV[0]; //get faster after you hit it
+  if((gBallPos[0] == 10) && (gBallPos[1] > gPaddlePos[0] - 3) && (gBallPos[1] < (gPaddlePos[0] + gPaddleSize[0] + 3))){ //if it hits the left paddle
+    gBallV[0] = -gBallV[0]; //get faster after you hit it
   }
-  if((ballPos[0] == fieldSize[0] - 10) && (ballPos[1] > paddlePos[1] - 3) && (ballPos[1] < (paddlePos[1] + paddleSize[0] + 3))){ //if it hits the right paddle
-    ballV[0] = -ballV[0];
+  if((gBallPos[0] == gFieldSize[0] - 10) && (gBallPos[1] > gPaddlePos[1] - 3) && (gBallPos[1] < (gPaddlePos[1] + gPaddleSize[0] + 3))){ //if it hits the right paddle
+    gBallV[0] = -gBallV[0];
   }
   
-  // if ball goes out of frame reset in the middle and put to default speed and increment score...
+  // if ball goes out of frame reset in the middle and put to default speed and increment gScore...
   
-  if(ballPos[0] < -10){ //changed these numbers you had old ones so ball was going super far out of frame
-    ballPos[0] = fieldSize[0]/2;
-    ballPos[1] = fieldSize[1]/2;
-    ballV[0] = 1;
-    ballV[1] = 2;
-    score[1] = score[1] + 1;
+  if(gBallPos[0] < -10){ //changed these numbers you had old ones so ball was going super far out of frame
+    gBallPos[0] = gFieldSize[0]/2;
+    gBallPos[1] = gFieldSize[1]/2;
+    gBallV[0] = 1;
+    gBallV[1] = 2;
+    gScore[1] = gScore[1] + 1;
     sendScore();
   }
-  if(ballPos[0] >fieldSize[0] +10 ){ //changed these numbers you had old ones so ball was going super far out of frame
-    ballPos[0] = fieldSize[0]/2;
-    ballPos[1] = fieldSize[1]/2;
-    ballV[0] = 1;
-    ballV[1] = 2;
-    score[0]++;
+  if(gBallPos[0] >gFieldSize[0] +10 ){ //changed these numbers you had old ones so ball was going super far out of frame
+    gBallPos[0] = gFieldSize[0]/2;
+    gBallPos[1] = gFieldSize[1]/2;
+    gBallV[0] = 1;
+    gBallV[1] = 2;
+    gScore[0] = gScore[0] + 1; 
     sendScore();
   }
   
-  ballPos[0]+=ballV[0];
-  ballPos[1]+=ballV[1];
+  gBallPos[0]+=gBallV[0];
+  gBallPos[1]+=gBallV[1];
 }
 
-//Temporary function to initialize game.
+/* 
+Initializes the game state.
+
+In future revisions, magic numbers will be replaced with
+constants and parameters.
+*/
 function initGame(){
   console.log("Game initializing!");
-  paddlePos = [50,50];
-  ballPos = [50,50];
-  score = [0,0];
-  fieldSize = [100,100];
-  ballV = [1,2];
-  ballR = (1/20)*fieldSize[1];
+  gPaddlePos = [50,50];
+  gBallPos = [50,50];
+  gScore = [0,0];
+  gFieldSize = [100,100];
+  gBallV = [1,2];
+  gBallR = (1/20)*gFieldSize[1];
   //height, width
-  paddleSize = [(1/5)*fieldSize[0], (1/15)*fieldSize[1]];
-  //Other game initialization stuff that's really important/cool.
+  gPaddleSize = [(1/5)*gFieldSize[0], (1/15)*gFieldSize[1]];
 }
 
-//when someone connects
-io.sockets.on('connection', function (client) {
+/*
+  This gets called when someone connects to the server.
+  The argument of the function is essentially a pointer to that particular client's socket.
+*/
+io.sockets.on('connection', function (aClient) { //Note: connection is a library-specific event and its name cannot be easily changed.
   console.log("Client connecting.");
   var clientType; 
   var playerNum;
 
-  //socket.emit('news', { hello: 'world', foo:'bar' });
-  client.on('clientType', function(data) {
+  //When a particular client sends a "clientType" event -- argument is data from client.
+  aClient.on('onClientType', function(data) {
      clientType = data.type;
 
      //Determine which list to add the client to.
      if(clientType == 'spectator'){
-	spectators.push(client);
+	gSpectators.push(aClient);
 	console.log('Spectator!');
      }
-     if(clientType == 'player' && players.length != 2){
-	if(players.length == 0){
+     //Once there are two gPlayers, no more connections can be gPlayers.
+     if(clientType == 'player' && gPlayers.length < 2){
+	if(gPlayers.length == 0){ //Temporary algorithm for player ID
 	  playerNum = 0;
 	} else {
 	  playerNum = 1;
 	}
-	players.push(client);
-	client.emit('paddleNum', {paddleNum: playerNum});
+	gPlayers.push(aClient);
+	aClient.emit('paddleNum', {paddleNum: playerNum});
 	console.log('Player ' + playerNum  + '!');
      }
      	
      
-     //Temporary for TESTING
-
-     if(players.length == 2){
+     //Once there are two gPlayers, start the game.
+     if(gPlayers.length == 2){
 	initGame();
 	startGame();
      }	
   });
 
-  client.on('updatePaddle', function(data) {
+  //When a client sends an updatePaddle event, record their new paddle position.
+  aClient.on('onUpdatePaddle', function(aData) {
     //update the value of particular paddle position.
-    paddlePos[playerNum] = data.pos; 
-    console.log("Player " + (playerNum + 1) + " pos:" + data.pos);
+    gPaddlePos[playerNum] = aData.pos; 
+    console.log("Player " + (playerNum + 1) + " pos:" + aData.pos);
   });
 
 });
 
-
-/////////////////////////////
-//     HELPER FUNCTIONS
-//     From NodePong
-/////////////////////////////
-// round to nearest hundredth
-//function rnd(val) {
-//  return Math.round(val*100)/100;
-//}
-//
-//// log shortcut
-//function log(x) {
-//  console.log(x);
-//}
-//
-//// log a list of variables
-//function report(list) {
-//  msg = ''
-//  for (x in list) {
-//    msg += list[x]+': '+eval(list[x])+', ';
-//  }
-//  log(msg);
-//}
-//
-//// is a member of obj? approximate python's 'is in'
-//function contains(a, obj) {
-//  var i = a.length;
-//  while (i--) { if (a[i] == obj) return true; }
-//  return false;
-//}
-//
-//// does obj contain a key with value val? if so return key
-//function hasAttr(obj, id, val) {
-//  for(x in obj) {
-//    for (y in obj[x]) {
-//      if (y == id && obj[x][y] == val) {return obj[x];}
-//    }
-//  }
-//  return false;
-//}
-//
-//function eliminateDuplicates(array) {
-//  var newArray = new Array();
-//
-//  label:for(var i=0; i<array.length; i++ ) {
-//    for(var j=0; j<newArray.length;j++ ) {
-//      if(newArray[j].name==array[i].name) continue label;
-//    }
-//    newArray[newArray.length] = array[i];
-//  }
-//  return newArray;
-//}

@@ -16,7 +16,6 @@
 \newpage
 
 \tableofcontents
-\newpage
 
 \section{Our Product}
 The Server Team branch of the Vir-Pong project handles the communication between devices during a pong game, as well as the game logic. The server will function as the hub of communication for devices playing Vir-Pong, and will also maintain a database explicitly for the purpose of replaying games.
@@ -199,7 +198,7 @@ In the near future, devices will consist of modern browsers, Android platform ph
 %Will probably have lots of \newpage commands here.
 \subsection{System Sequence Diagram}
 Our highest priority use case was that of any client connected to the system. We have illustrated it in the following System Sequence Diagram. The diagram shows the client requesting a connection with the system, the system accepting that connection. The system proceeds to create a clientID to identifiy the client. The system then sends the clientID to the client along with a ready signal. The system then reports avaliable games to the client. 
-\begin{center}\includegraphics{SSD.pdf} \end{center} 
+\begin{center} \includegraphics{SSD.pdf} \end{center} 
 \section{Nonfunctional Requirements}
 \begin{itemize}
 \item The desired communication time between a phone and server should be process and stored with less than a 75 nanosecond lag-time.
@@ -211,7 +210,7 @@ Our highest priority use case was that of any client connected to the system. We
 These secondary features will bring out the performance and ability of our server and increase the game options Vir-Pong players are afforded. 
 \section{Domain Analysis}
 The domain of our problem consists largely of a client, game, and a lobby. We want the lobby, our conceptualization of a server, to connect clients to games.\\
-\begin{center}\includegraphics{DomAnaUML.eps} \end{center} 
+\begin{center}\includegraphics{DomAnaUML.pdf} \end{center} 
 A client is recognized mainly by the device used in connecting with the lobby. This device is assigned a clientID by the lobby in order to track user interactions with the system. At any one point in time, a client can be either a player or an observer. A client can easily switch between these definitions, but will always retain their clientID while connected. Such is why we have made player and spectators conceptual classes of the generic class client. A theoretically infinite amount of spectators can observe a game, but only two players can play one game. The lobby that connects players and observers to games can host a theoretically infinite amount of games at any one given moment, but all games are tagged back to one lobby. Each game is associated with a single game state. This game state holds the positions of the paddles and the ball. The game state only exists during an instance of the game and, quite essentially, holds the state of a game. Our definition of a game state is the position of paddles and the ball. This game state builds a replay. Any number of spectators can watch any number of these replays. 
 
 \section{Implementation}
@@ -374,7 +373,7 @@ The data we’re storing is specific to games and the players of each. This data
 This information will be placed in one collection replays. The replays collection in our database will hold game positions and collision data so that we can reverse engineer games as ‘replays’ by pulling out the position data of players and applying current game logic. \\
 
 %The E/R Diagram
-\includegraphics{ERdia.eps} \\
+\includegraphics{ERdia.pdf} \\
 
 
 This diagram is loosely modeled off of an E/R diagram. There are two main classes (player and game), and an association complete with a class between them (position). Player is a repository of information that we will communicate with regarding user identity and later update with score information. Our data’s interactions with player class will be minimal but essential for some of the web user interface secondary features, which including information tracking. There can be as little as no players a game up to two, and the position is only important for non-computer players. The game section of the document will hold the gameID and a boolean status of whether or not the game is current, these pieces of information will be added to every game played to ensure better tracking. The boolean ‘current’ will be set from true to false on all documents composing the game when the game ends. The game will also keep track of scores when they are initialized and whenever they are updated.
