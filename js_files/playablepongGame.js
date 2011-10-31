@@ -41,9 +41,12 @@ var timeLimit;
 var scoreLimit;
 var gameOver;
 
-//draws the Ball
-//takes x and y coord for parameters
-function circle(cx,cy) {
+/**
+/draws the ball
+/@param cx the x position of the ball
+/@param cy the y position of the ball
+*/
+function circle(cx, cy) {
 	ctx.beginPath();
 	ctx.moveTo(cx, cy);
 	ctx.arc(cx, cy, 11, 0, Math.PI*2, false);
@@ -52,40 +55,57 @@ function circle(cx,cy) {
 }
 
  
-// Added in - Paddle 1
-function paddle1(x,y){
+/**
+/Added in - Paddle 1
+/@param arrowY the y position of the paddle
+*/
+function paddle1(x, y){
   ctx.beginPath();
-  ctx.rect(x,y,paddleWidth, paddleHeight);
+  ctx.rect(x, y, paddleWidth, paddleHeight);
   ctx.closePath();
   ctx.fill();
 }
  
-// Added in - Paddle 2
-function paddle2(arrowX,arrowY){
+/**
+/Added in - Paddle 2
+/@param y the y position of the paddle
+*/
+function paddle2(arrowX, arrowY){
   ctx.beginPath();
-  ctx.rect(arrowX,arrowY,paddleWidth, paddleHeight);
+  ctx.rect(arrowX, arrowY, paddleWidth, paddleHeight);
   ctx.closePath();
   ctx.fill();
 }
  
- // Draws the canvas
-function rect(x,y,w,h) {
+ /**
+ /Draws the canvas
+ */
+function rect(x, y, w, h) {
   ctx.beginPath();
-  ctx.rect(x,y,w,h);
+  ctx.rect(x, y, w, h);
   ctx.closePath();
   ctx.fill();
 }
  
- 
+ /**
+ /Clears the canvas
+ */ 
 function clear() {
-  ctx.clearRect(0, 0, WIDTH +500, HEIGHT +500); //+500 fixes the ball erase problem of canvas
+  ctx.clearRect(0, 0, WIDTH + 500, HEIGHT + 500); //+500 fixes the ball erase problem of canvas
 }
  
+  /**
+ /This function draws the ball and players
+ */
 function draw(){
   drawBall();
   drawPlayers();
   return dataList;
 }
+
+/**
+/Initialize the js file
+*/
 function init() {
   canvas = document.getElementById("canvas");
   ctx = canvas.getContext("2d");
@@ -93,23 +113,25 @@ function init() {
   return setInterval(draw, timeInc);
 }
 
- 
+ /**
+ /draws the players 
+ */
 function drawPlayers(){
  
   ctx.fillStyle = "WHITE";//player left
   paddle2(XPOS, yPos);
   
   ctx.fillStyle = "#7F3AF8"; //player right
-  paddle1(ARROWXPOS,arrowYPos);
+  paddle1(ARROWXPOS, arrowYPos);
    window.onkeydown = function(e){
  
 	// Keyboard input
 	var keyCode = e.keyCode;
 
-	if(keyCode == qwertyW && yPos> 20){
+	if(keyCode == qwertyW && yPos > 20){
 		yPos -= 10;
 	}
-	if(keyCode == qwertyS && yPos< HEIGHT - paddleHeight){
+	if(keyCode == qwertyS && yPos < HEIGHT - paddleHeight){
 		yPos += 10;
 	}
         if(keyCode == up && arrowYPos > 20){
@@ -127,7 +149,9 @@ function drawPlayers(){
 
 }
 
-
+/**
+/This function draws the ball and creates the path of the ball
+*/
 function drawBall() {
   clear();
  
@@ -136,7 +160,7 @@ function drawBall() {
   
   //draws ball. Takes the x and y coord as parameters
   ctx.fillStyle = "WHITE";
-  circle(x,y);
+  circle(x, y);
   if(ifHit){
     ifHit();
   }
@@ -162,9 +186,10 @@ function drawBall() {
   x += dx;
   y += dy;
 }
+
 /**
-ifHit checks to see if the ball comes in contact with the paddle's coordinates 
-and changes its direction accordingly.  
+/ifHit checks to see if the ball comes in contact with the paddle's coordinates 
+/and changes its direction accordingly.  
 */
 function ifHit(){
   if(x == XPOS + paddleWidth){ //checks if the ball is in the paddle1's range of x coordinates
@@ -172,7 +197,7 @@ function ifHit(){
       dx = -dx; //ball x direction is reversed
     }
   }
-  else if(x >= XPOS && x<= XPOS + paddleWidth){
+  else if(x >= XPOS && x <= XPOS + paddleWidth){
     if(y == yPos || y == yPos + paddleHeight){ //top and bottom edge
        dy = -dy;
        dx = -dx;
