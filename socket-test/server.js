@@ -19,6 +19,7 @@ io.set('log level', 1); // reduce logging
 var gSpectators = [];
 var gPlayers = [];
 
+var gGameOn; 	// Boolean whether or not the game is being played
 var gPaddlePos; // [player1, player2] height position.
 var gBallPos;   // [ballX, ballY] ball positions.
 var gBallV;	// [ballVX, ballVY] ball velocities. 
@@ -35,7 +36,7 @@ This will soon be phased out to support multiple game instances.
 Emits updateGame node event with paddle and ball position arrays.
 */
 function sendGameState(){
-  io.sockets.emit('onUpdateGame', {paddle: gPaddlePos, ball: gBallPos});
+  io.sockets.emit('gameState', {paddle: gPaddlePos, ball: gBallPos});
 }
 
 /* This is the main game loop that is set to run every 50 ms. */
@@ -55,11 +56,11 @@ setInterval(function() {
   }, 50);
 }
 
-/* Sends an onSendScore event to all connected clients (will be phased out soon for a more
+/* Sends an scoreUpdate event to all connected clients (will be phased out soon for a more
 modular approach */
 function sendScore(){
  //Still sending to everyone.
- io.sockets.emit('onSendScore', { data: gScore });
+ io.sockets.emit('scoreUpdate', { data: gScore });
 }
 
 /*
@@ -137,7 +138,7 @@ io.sockets.on('connection', function (aClient) { //Note: connection is a library
   var playerNum;
 
   //When a particular client sends a "clientType" event -- argument is data from client.
-  aClient.on('onClientType', function(data) {
+  aClient.on('clientType', function(data) {
      clientType = data.type;
 
      //Determine which list to add the client to.
@@ -153,20 +154,21 @@ io.sockets.on('connection', function (aClient) { //Note: connection is a library
 	  playerNum = 1;
 	}
 	gPlayers.push(aClient);
-	aClient.emit('paddleNum', {paddleNum: playerNum});
+	aClient.emit('paddleID', {paddleID: playerNum});
 	console.log('Player ' + playerNum  + '!');
      }
      	
      
      //Once there are two gPlayers, start the game.
-     if(gPlayers.length == 2){
+     if(gPlayers.length == 2 && !gGameOn){
 	initGame();
+	gGameOn = true;
 	startGame();
      }	
   });
 
   //When a client sends an updatePaddle event, record their new paddle position.
-  aClient.on('onUpdatePaddle', function(aData) {
+  aClient.on('paddleUpdate', function(aData) {
     //update the value of particular paddle position.
     gPaddlePos[playerNum] = aData.pos; 
     console.log("Player " + (playerNum + 1) + " pos:" + aData.pos);
