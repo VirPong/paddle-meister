@@ -36,7 +36,7 @@ This will soon be phased out to support multiple game instances.
 Emits updateGame node event with paddle and ball position arrays.
 */
 function sendGameState(){
-  io.sockets.emit('gameState', {paddle: gPaddlePos, ball: gBallPos});
+  io.sockets.volatile.emit('gameState', {paddle: gPaddlePos, ball: gBallPos});
 }
 
 /* This is the main game loop that is set to run every 50 ms. */
@@ -60,7 +60,7 @@ setInterval(function() {
 modular approach */
 function sendScore(){
  //Still sending to everyone.
- io.sockets.emit('scoreUpdate', { data: gScore });
+ io.sockets.emit('scoreUpdate', { score: gScore });
 }
 
 /*
