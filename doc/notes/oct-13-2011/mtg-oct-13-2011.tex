@@ -1,0 +1,100 @@
+% !TEX TS-program = pdflatex
+% !TEX encoding = UTF-8 Unicode
+
+% This is a simple template for a LaTeX document using the "article" class.
+% See "book", "report", "letter" for other types of document.
+
+\documentclass[11pt]{article} % use larger type; default would be 10pt
+
+\usepackage[utf8]{inputenc} % set input encoding (not needed with XeLaTeX)
+
+%%% Examples of Article customizations
+% These packages are optional, depending whether you want the features they provide.
+% See the LaTeX Companion or other references for full information.
+
+%%% PAGE DIMENSIONS
+\usepackage{geometry} % to change the page dimensions
+\geometry{letterpaper} % or letterpaper (US) or a5paper or....
+% \geometry{margins=2in} % for example, change the margins to 2 inches all round
+% \geometry{landscape} % set up the page for landscape
+%   read geometry.pdf for detailed page layout information
+
+%\usepackage{graphicx} % support the \includegraphics command and options
+
+% \usepackage[parfill]{parskip} % Activate to begin paragraphs with an empty line rather than an indent
+
+%%%% PACKAGES
+%\usepackage{booktabs} % for much better looking tables
+%\usepackage{array} % for better arrays (eg matrices) in maths
+%\usepackage{paralist} % very flexible & customisable lists (eg. enumerate/itemize, etc.)
+%\usepackage{verbatim} % adds environment for commenting out blocks of text & for better verbatim
+%\usepackage{subfig} % make it possible to include more than one captioned figure/table in a single float
+%% These packages are all incorporated in the memoir class to one degree or another...
+%
+%%%% HEADERS & FOOTERS
+%\usepackage{fancyhdr} % This should be set AFTER setting up the page geometry
+%\pagestyle{fancy} % options: empty , plain , fancy
+%\renewcommand{\headrulewidth}{0pt} % customise the layout...
+%\lhead{}\chead{}\rhead{}
+%\lfoot{}\cfoot{\thepage}\rfoot{}
+%
+%%%% SECTION TITLE APPEARANCE
+%\usepackage{sectsty}
+%\allsectionsfont{\sffamily\mdseries\upshape} % (See the fntguide.pdf for font help)
+%% (This matches ConTeXt defaults)
+%
+%%%% ToC (table of contents) APPEARANCE
+%\usepackage[nottoc,notlof,notlot]{tocbibind} % Put the bibliography in the ToC
+%\usepackage[titles,subfigure]{tocloft} % Alter the style of the Table of Contents
+%\renewcommand{\cftsecfont}{\rmfamily\mdseries\upshape}
+%\renewcommand{\cftsecpagefont}{\rmfamily\mdseries\upshape} % No bold!
+%
+%%%% END Article customizations
+
+%%% The "real" document content comes below...
+
+\title{Meeting Notes}
+\author{Server Group}
+\date{13 Oct 2011} % Activate to display a given date or no date (if empty),
+         % otherwise the current date is printed
+
+\begin{document}
+\maketitle
+
+\section{Members Attended}
+
+\begin{itemize}
+        \item Shelby Lee (M)
+        \item Ryan Wheeler
+        \item Patrick Green
+        \item Daniel Guilak
+\end{itemize}
+
+\section{Review of Goals}
+
+\begin{itemize}
+         \item Work on phone to server, server to database (Mongo), database to sever and web communications. - all
+       \item Understanding websockets - all
+        \item Querying the database - Shelby
+        \item Finding and understanding javascript ping pong game - Dan, Patrick, Ryan
+
+
+\end{itemize}
+
+\section{What has been accomplished}
+
+\begin{itemize}
+        \item Connection: currently phone-to-server one-way conversations. Multiple phones send data to server and server sends that data back plus some extra data. Database was having some trouble connoting (using javascript very ugly), downloaded node-mongodb-native to help facilitate connection code.
+       \item Found and are currently in the process of tearing apart a ping pong game to help build game logic.
+        \item Understand how to query from mongodb, in the process of creating javascript code
+\end{itemize}
+
+\section{New Goals}
+
+\begin{itemize}
+        \item Connection: have the phone-server hold a two-way conversation - Dan
+       \item Build ping pong game logic (possibly using Garret's code) - Patrick, Ryan
+       \item Have the database connect and communicate to the server to take queries - Shelby
+\end{itemize}
+
+\end{document}
