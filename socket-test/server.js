@@ -82,10 +82,17 @@ function ballLogic(){
   
   if((gBallPos[0] == 10) && (gBallPos[1] > gPaddlePos[0] - 3) && (gBallPos[1] < (gPaddlePos[0] + gPaddleSize[0] + 3))){ //if it hits the left paddle
     gBallV[0] = -gBallV[0]; //get faster after you hit it
+  }else if(gBallPos[0] <= gPaddleSize[1]){//top and bottom of paddles
+      if(gBallPos[1] == gPaddlePos[0] || gBallPos[1] == gPaddlePos[0] + gPaddleSize[0]){
+      	gBallV[0] = -gBallV[0];
+      }
   }
   if((gBallPos[0] == gFieldSize[0] - 10) && (gBallPos[1] > gPaddlePos[1] - 3) && (gBallPos[1] < (gPaddlePos[1] + gPaddleSize[0] + 3))){ //if it hits the right paddle
     gBallV[0] = -gBallV[0];
-  }
+  }else if(gBallPos[0] <= gFieldSize - gPaddleSize[1]){//top and bottom of paddles
+     if(gBallPos[1] == gPaddlePos[1] || gBallPos[1] == gPaddlePos[1] + gPaddleSize[0]){
+	gBallV[0] = -gBallV[0];
+     }
   
   // if ball goes out of frame reset in the middle and put to default speed and increment gScore...
   
