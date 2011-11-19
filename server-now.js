@@ -9,9 +9,15 @@ var everyone = nowjs.initialize(server);
 
 var users = [];
 var gameOn = false;
+//THIS IS AWFUL HOLY CRAP
+var numPlayers = 0;
+
 nowjs.on('connect', function() {
-  users[this.user.clientId] = {paddle: 0};
-  if(users.length == 2 && !gameOn){
+  console.log("User connecting. Prepare for battle.");
+  users[this.user.clientId] = {paddle: numPlayers};
+  numPlayers = numPlayers + 1;
+  if(numPlayers == 2 && !gameOn){
+    console.log("Ready? FIGHT!");
     gameOn = true;
     startGame(); 
   }
@@ -50,7 +56,7 @@ function ballLogic(){
 
   //Ball bouncing logic
   
-  if( everyone.now.ballY<0 || everyone.now.ballY>gFieldSize[1]){
+  if( everyone.now.ballY<0 || everyone.now.ballY>everyone.now.gameY){
     gBallV[1] = -gBallV[1]; //change everyone.now.ballY direction if you go off screen in y direction ....
   }
   
@@ -62,22 +68,22 @@ function ballLogic(){
   if((everyone.now.ballX == 10) && (everyone.now.ballY > everyone.now.paddleLeft - 3) && (everyone.now.ballY < (everyone.now.paddleLeft + gPaddleSize[0] + 3))){ //if it hits the left paddle
     gBallV[0] = -gBallV[0]; //get faster after you hit it
   }
-  if((everyone.now.ballX == gFieldSize[0] - 10) && (everyone.now.ballY > everyone.now.paddleRight - 3) && (everyone.now.ballY < (everyone.now.paddleRight + gPaddleSize[0] + 3))){ //if it hits the right paddle
+  if((everyone.now.ballX == everyone.now.gameX - 10) && (everyone.now.ballY > everyone.now.paddleRight - 3) && (everyone.now.ballY < (everyone.now.paddleRight + gPaddleSize[0] + 3))){ //if it hits the right paddle
     gBallV[0] = -gBallV[0];
   }
   
   // if ball goes out of frame reset in the middle and put to default speed and increment gScore...
   
   if(everyone.now.ballX < -10){ //changed these numbers you had old ones so ball was going super far out of frame
-    everyone.now.ballX = gFieldSize[0]/2;
-    everyone.now.ballY = gFieldSize[1]/2;
+    everyone.now.ballX = everyone.now.gameX/2;
+    everyone.now.ballY = everyone.now.gameY/2;
     gBallV[0] = 1;
     gBallV[1] = 2;
     everyone.now.scoreRight = everyone.now.scoreRight + 1;
   }
-  if(everyone.now.ballX >gFieldSize[0] +10 ){ //changed these numbers you had old ones so ball was going super far out of frame
-    everyone.now.ballX = gFieldSize[0]/2;
-    everyone.now.ballY = gFieldSize[1]/2;
+  if(everyone.now.ballX >everyone.now.gameX +10 ){ //changed these numbers you had old ones so ball was going super far out of frame
+    everyone.now.ballX = everyone.now.gameX/2;
+    everyone.now.ballY = everyone.now.gameY/2;
     gBallV[0] = 1;
     gBallV[1] = 2;
     everyone.now.scoreLeft = everyone.now.scoreLeft + 1; 
