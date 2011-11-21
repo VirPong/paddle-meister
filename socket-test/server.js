@@ -17,33 +17,40 @@ io.set('log level', 1); // reduce logging
 
 var gClients = [];
 var gRooms = new Array();
+var gNumRooms = 0; //Associative arrays are objects, objects don't have length.
 /*
   This gets called when someone connects to the server.
   The argument of the function is essentially a pointer to that particular client's socket.
 */
 io.sockets.on('connection', function (aClient) { 
+
   console.log("Client connecting.");
 
   newClient = new Client(aClient, "Bobothy");
+  newClient.socket.emit('yeahboi');
+  console.log("Created new client: " + newClient.name);
   gClients.push(newClient);
 
   //Server needs to: emit a game list
-  aClient.emit('roomList', {rooms: gRooms});
+  aClient.emit('roomList', {rooms: gRooms, numRooms: gNumRooms});
 
   aClient.on('joinRoom', function(data){
     aClient.join(data.name);
     newClient.currentRoom = gRooms[data.name]; 
     newClient.clientType = data.clientType;
-    gRooms[data.name].join(newClient);
+    gRooms[data.name].joinRoom(newClient);
   });
 
   aClient.on('createRoom', function(data){
-    aClient.join(data.name);
-    newRoom = new Room(data.name);
+    console.log("I want to creat a new room: " + data.name + "!");
+    var newRoom = new Room(data.name);
     newClient.clientType = 'player';
-    gRooms[newRoom.name] = newRoom;
+    console.log("Adding new room.");
+    addRoom(newRoom); 
+    aClient.join(data.name);
+    console.log("Room length now: " + gNumRooms);
+    newRoom.joinRoom(newClient);
     newClient.currentRoom = newRoom;
-    gRooms[newRoom.name].join(newClient);
 
     console.log("New room: " + newRoom.name + ".");
   });
@@ -63,6 +70,15 @@ io.sockets.on('connection', function (aClient) {
 
 });
 
+function addRoom(newRoom) {
+  gRooms[newRoom.name] = newRoom;
+  gNumRooms = gNumRooms + 1; 
+}
+
+//TODO: This guy.
+function removeRoom(){
+}
+
 //Client object -- would make sense to have player and spectator inheirit at some point.
 function Client (socket, name) {
   this.socket = socket;
@@ -70,43 +86,53 @@ function Client (socket, name) {
   this.clientType;
   this.currentRoom;
 
-  this.paddlePos;
+  this.paddlePos = 50;
   this.playerNum;
 }
+
 
 //Game object!
 function Room (name) {
   this.name = name;
-
+  var self = this;
   /* Variable declarations */
-  this.spectators = [];
-  this.players = [];
+  this.spectators = new Array();
+  this.players = new Array();
   this.numPlayers = 0;
   this.gameOn = false;	// Boolean whether or not the game is being played
-  this.paddlePos; // [player1, player2] height position.
-  this.ballPos;   // [ballX, ballY] ball positions.
-  this.ballV;	// [ballVX, ballVY] ball velocities. 
+  this.paddlePos = []; // [player1, player2] height position.
+  this.ballPos = [];   // [ballX, ballY] ball positions.
+  this.ballVi = [];	// [ballVX, ballVY] ball velocities. 
   this.ballR;	// The ball radius (currently not in implementation)
-  this.score;	// [scorePlayer1, scorePlayer2] player scores.
-  this.fieldSize; // [fieldX, fieldY] size of the game field.
+  this.score = [];	// [scorePlayer1, scorePlayer2] player scores.
+  this.fieldSize = []; // [fieldX, fieldY] size of the game field.
   this.paddleSize;// [paddleHeight, paddleWidth]
   
-  this.join = function(client){
+  this.joinRoom = function(client){
     if(client.clientType == 'player'){
-      players.push(client);
-      client.socket.emit('paddleID', {paddleID: numPlayers});
-      numPlayers = numPlayers + 1;
+      this.players.push(client);
+      this.paddlePos[this.numPlayers] = client.paddlePos;
+      client.socket.emit('paddleID', {paddleID: this.numPlayers});
+      this.numPlayers = this.numPlayers + 1;
+      console.log("Number of players in " + this.name + ": " + this.numPlayers);
     } 
     else if(client.clientType == 'spectator'){
-      spectators.push(client);
+      this.spectators.push(client);
     }
     
-    if(numPlayers == 2 && !gameOn){
+    if(this.numPlayers == 2 && !this.gameOn){
       this.initGame();
       this.startGame();
     }
   };
 
+  /* This is the main game loop that is set to run every 50 ms. */
+  this.startGame = function(){
+      setInterval(function() {
+        self.ballLogic(); //Run ball logic simulation.
+        self.sendGameState(); //Send game state to all sockets.
+      }, 50);
+  }
   /* 
   Initializes the game state.
   
@@ -115,14 +141,13 @@ function Room (name) {
   */
   this.initGame = function (){
     console.log("Game initializing in " + this.name + "!");
-    paddlePos = [50,50];
-    ballPos = [50,50];
-    score = [0,0];
-    fieldSize = [100,100];
-    ballV = [1,2];
-    ballR = (1/20)*fieldSize[1];
+    this.ballPos = [50,50];
+    this.score = [0,0];
+    this.fieldSize = [100,100];
+    this.ballV = [1,2];
+    this.ballR = (1/20)*this.fieldSize[1];
     //height, width
-    paddleSize = [(1/5)*fieldSize[0], (1/15)*fieldSize[1]];
+    this.paddleSize = [(1/5)*this.fieldSize[0], (1/15)*this.fieldSize[1]];
   };
 
   /*
@@ -133,22 +158,15 @@ function Room (name) {
   Emits updateGame node event with paddle and ball position arrays.
   */
   this.sendGameState = function(){
-    io.sockets.in(this.name).volatile.emit('gameState', {paddle: paddlePos, ball: ballPos});
+    io.sockets.in(this.name).volatile.emit('gameState', {paddle: this.paddlePos, ball: this.ballPos});
   };
   
-  /* This is the main game loop that is set to run every 50 ms. */
-  this.startGame = function(){
-      this.setInterval(function() {
-      this.ballLogic(); //Run ball logic simulation.
-      this.sendGameState(); //Send game state to all sockets.
-    }, 50);
-  };
   
   /* Sends an scoreUpdate event to all connected clients (will be phased out soon for a more
   modular approach */
   this.sendScore = function(){
    //Still sending to everyone.
-   io.sockets.in(this.name).emit('scoreUpdate', { score: score });
+   io.sockets.in(this.name).emit('scoreUpdate', { score: this.score });
   };
   
   /*
@@ -159,8 +177,8 @@ function Room (name) {
   
     //Ball bouncing logic
     
-    if( ballPos[1]<0 || ballPos[1]>fieldSize[1]){
-      ballV[1] = -ballV[1]; //change gBallPos[1] direction if you go off screen in y direction ....
+    if( this.ballPos[1]<0 || this.ballPos[1]>this.fieldSize[1]){
+      this.ballV[1] = -this.ballV[1]; //change gBallPos[1] direction if you go off screen in y direction ....
     }
     
     // Paddle Boundary Logic
@@ -168,34 +186,34 @@ function Room (name) {
     // changed all these numbers to more reasonable also, these kinda stuff should also be fields but we can
     // think about that later
     
-    if((ballPos[0] == 10) && (ballPos[1] > paddlePos[0] - 3) && (ballPos[1] < (paddlePos[0] + paddleSize[0] + 3))){ //if it hits the left paddle
-      ballV[0] = -ballV[0]; //get faster after you hit it
+    if((this.ballPos[0] == 10) && (this.ballPos[1] > this.paddlePos[0] - 3) && (this.ballPos[1] < (this.paddlePos[0] + this.paddleSize[0] + 3))){ //if it hits the left paddle
+      this.ballV[0] = -this.ballV[0]; //get faster after you hit it
     }
-    if((ballPos[0] == fieldSize[0] - 10) && (ballPos[1] > paddlePos[1] - 3) && (ballPos[1] < (paddlePos[1] + paddleSize[0] + 3))){ //if it hits the right paddle
-      ballV[0] = -ballV[0];
+    if((this.ballPos[0] == this.fieldSize[0] - 10) && (this.ballPos[1] > this.paddlePos[1] - 3) && (this.ballPos[1] < (this.paddlePos[1] + this.paddleSize[0] + 3))){ //if it hits the right paddle
+      this.ballV[0] = -this.ballV[0];
     }
     
     // if ball goes out of frame reset in the middle and put to default speed and increment gScore...
     
-    if(ballPos[0] < -10){ //changed these numbers you had old ones so ball was going super far out of frame
-      ballPos[0] = fieldSize[0]/2;
-      ballPos[1] = fieldSize[1]/2;
-      ballV[0] = 1;
-      ballV[1] = 2;
-      score[1] = score[1] + 1;
+    if(this.ballPos[0] < -10){ //changed these numbers you had old ones so ball was going super far out of frame
+      this.ballPos[0] = this.fieldSize[0]/2;
+      this.ballPos[1] = this.fieldSize[1]/2;
+      this.ballV[0] = 1;
+      this.ballV[1] = 2;
+      this.score[1] = this.score[1] + 1;
       this.sendScore();
     }
-    if(ballPos[0] >fieldSize[0] +10 ){ //changed these numbers you had old ones so ball was going super far out of frame
-      ballPos[0] = fieldSize[0]/2;
-      ballPos[1] = fieldSize[1]/2;
-      ballV[0] = 1;
-      ballV[1] = 2;
-      score[0] = score[0] + 1; 
+    if(this.ballPos[0] >this.fieldSize[0] +10 ){ //changed these numbers you had old ones so ball was going super far out of frame
+      this.ballPos[0] = this.fieldSize[0]/2;
+      this.ballPos[1] = this.fieldSize[1]/2;
+      this.ballV[0] = 1;
+      this.ballV[1] = 2;
+      this.score[0] = this.score[0] + 1; 
       this.sendScore();
     }
     
-    ballPos[0]+=ballV[0];
-    ballPos[1]+=ballV[1];
+    this.ballPos[0]+=this.ballV[0];
+    this.ballPos[1]+=this.ballV[1];
   };
 
 }
