@@ -3,16 +3,21 @@
 
 var PORT = 3000;
 //Require the express framework (which creates a server)
-var app = require('express').createServer(),
-sys = require(process.binding('natives').util ? 'util' : 'sys')
+//var app = require('express').createServer(),
+//sys = require(process.binding('natives').util ? 'util' : 'sys')
 //and socket.io which provides websocket support.
-    sio = require('socket.io');
 
 //set the server to listen on port
-app.listen(PORT);
+//app.listen(PORT);
 
 //set the sockets to listen on same port.
-var io = sio.listen(app);
+var io = require('socket.io').listen(PORT);
+//var sio = new io.Socket();
+
+//var app = require('http').createServer(handler);
+//app.listen(PORT);
+//io = require('socket.io').listen(app);
+
 io.set('log level', 1); // reduce logging
 
 /* Variable declarations */
@@ -85,13 +90,15 @@ function ballLogic(){
   }else if(gBallPos[0] <= gPaddleSize[1]){//top and bottom of paddles
       if(gBallPos[1] == gPaddlePos[0] || gBallPos[1] == gPaddlePos[0] + gPaddleSize[0]){
       	gBallV[0] = -gBallV[0];
+	gBallV[1] = -gBallV[1];
       }
   }
   if((gBallPos[0] == gFieldSize[0] - 10) && (gBallPos[1] > gPaddlePos[1] - 3) && (gBallPos[1] < (gPaddlePos[1] + gPaddleSize[0] + 3))){ //if it hits the right paddle
     gBallV[0] = -gBallV[0];
-  }else if(gBallPos[0] <= gFieldSize - gPaddleSize[1]){//top and bottom of paddles
+  }else if(gBallPos[0] <= gFieldSize[0] - gPaddleSize[1]){//top and bottom of paddles
      if(gBallPos[1] == gPaddlePos[1] || gBallPos[1] == gPaddlePos[1] + gPaddleSize[0]){
 	gBallV[0] = -gBallV[0];
+	gBallV[1] = -gBallV[1];
      }
   
   // if ball goes out of frame reset in the middle and put to default speed and increment gScore...
@@ -115,6 +122,7 @@ function ballLogic(){
   
   gBallPos[0]+=gBallV[0];
   gBallPos[1]+=gBallV[1];
+}
 }
 
 /* 
@@ -166,9 +174,9 @@ io.sockets.on('connection', function (aClient) { //Note: connection is a library
      }
      	
      
+     initGame();
      //Once there are two gPlayers, start the game.
      if(gPlayers.length == 2 && !gGameOn){
-	initGame();
 	gGameOn = true;
 	startGame();
      }	
