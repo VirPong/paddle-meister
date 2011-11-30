@@ -28,11 +28,14 @@ io.sockets.on('connection', function (aClient) {
 
   var newClient = new Client(aClient, "Bobothy");
   newClient.socket.emit('yeahboi');
-  console.log("Created new client: " + newClient.name);
   gClients.push(newClient);
 
   //Server needs to: emit a game list
   aClient.emit('roomList', {rooms: gRooms, numRooms: gNumRooms});
+  for(r in gRooms){
+    console.log("Room: " + r);
+  }
+
 
   aClient.on('joinRoom', function(data){
     aClient.join(data.name); //Joining socket.io 'room'
@@ -43,16 +46,16 @@ io.sockets.on('connection', function (aClient) {
 
   aClient.on('createRoom', function(data){
     console.log("I want to creat a new room: " + data.name + "!");
-    var newRoom = new Room(data.name);
+    var newRoom = new Room();
+    newRoom.setName(data.name);
     newClient.clientType = 'player';
-    console.log("Adding new room.");
     addRoom(newRoom); 
     aClient.join(data.name);
     console.log("Room length now: " + gNumRooms);
     newRoom.joinRoom(newClient);
     newClient.currentRoom = newRoom;
 
-    console.log("New room: " + newRoom.name + ".");
+    console.log("New room: " + gRooms[newRoom.name].getName() + ".");
   });
 
   //on clientType, just change in client object. 
@@ -71,7 +74,7 @@ io.sockets.on('connection', function (aClient) {
 });
 
 function addRoom(newRoom) {
-  gRooms[newRoom.name] = newRoom;
+  gRooms[newRoom.getName()] = newRoom;
   gNumRooms = gNumRooms + 1; 
 }
 
@@ -103,8 +106,8 @@ Client.prototype.getPaddlePos = function() {
 
 
 //Game object!
-function Room (name) {
-  this.name = name;
+function Room() {
+  this.name;
   /* Variable declarations */
   this.spectators = new Array();
   this.players = new Array();
@@ -117,6 +120,14 @@ function Room (name) {
   this.score = [];	// [scorePlayer1, scorePlayer2] player scores.
   this.fieldSize = []; // [fieldX, fieldY] size of the game field.
   this.paddleSize;// [paddleHeight, paddleWidth]
+}
+
+Room.prototype.getName = function(){
+  return this.name;
+}
+
+Room.prototype.setName = function(name){
+  this.name = name; 
 }
 
 Room.prototype.joinRoom = function(aClient){
