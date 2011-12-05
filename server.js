@@ -1,16 +1,28 @@
 /* Server.js v.0.3 for Vir-Pong, Inc */ /* Daniel Guilak -- daniel.guilak@gmail.com */
 
-var PORT = 3000; //Require the express framework (which creates a server) var app = require('express').createServer(), sys = require(process.binding('natives').util ? 'util' : 'sys') //and 
-socket.io which provides websocket support.
-    sio = require('socket.io');
+var PORT = 3000; //Require the express framework (which creates a server) 
+var app = require('express').createServer(), sys = require(process.binding('natives').util ? 'util' : 'sys') //and 
+//socket.io which provides websocket support.
+sio = require('socket.io');
 
-//set the server to listen on port app.listen(PORT);
+//set the server to listen on port 
+app.listen(PORT);
 
-//set the sockets to listen on same port. var io = sio.listen(app); io.set('log level', 1); // reduce logging
+//set the sockets to listen on same port. 
+var io = sio.listen(app); 
+//io.set('log level', 1); // reduce logging
 
-var gClients = []; var gRooms = new Array(); var gNumRooms = 0; //Associative arrays are objects, objects don't have length. /*
-  This gets called when someone connects to the server.
-  The argument of the function is essentially a pointer to that particular client's socket. */ io.sockets.on('connection', function (aClient) {
+var gClients = [];
+var gRooms = new Array(); 
+var gNumRooms = 0; //Associative arrays are objects, objects don't have length. /*
+
+var NOEVENT = 0;
+var WALLBOUNCE = 1;
+var PADDLEBOUNCE = 2;
+var SCORE = 3;
+//  This gets called when someone connects to the server.
+//  The argument of the function is essentially a pointer to that particular client's socket. */ 
+io.sockets.on('connection', function (aClient) {
 
   console.log("Client connecting.");
 
@@ -66,10 +78,9 @@ function addRoom(newRoom) {
   gNumRooms = gNumRooms + 1;
 }
 
-//TODO: This guy. function removeRoom(){
-}
-
-//Client object -- would make sense to have player and spectator inheirit at some point. function Client (socket, name) {
+//Client object -- would make sense to have player and spectator inheirit at some point.
+ 
+function Client (socket, name) {
   this.socket = socket;
   this.name = name;
   this.clientType;
@@ -91,9 +102,11 @@ Client.prototype.getPaddlePos = function() {
 //////////////////////////////////////////////
 
 
-//Game object! function Room() {
+//Game object! 
+function Room() {
   this.name;
   /* Variable declarations */
+  this.pendingEvent = NOEVENT;
   this.spectators = new Array();
   this.players = new Array();
   this.numPlayers = 0;
@@ -133,7 +146,8 @@ Room.prototype.joinRoom = function(aClient){
   }
 }
 
-/* This is the main game loop that is set to run every 50 ms. */ Room.prototype.startGame = function(){
+/* This is the main game loop that is set to run every 50 ms. */ 
+Room.prototype.startGame = function(){
     var self = this;
     setInterval(function() {
       self.ballLogic(); //Run ball logic simulation.
@@ -142,7 +156,9 @@ Room.prototype.joinRoom = function(aClient){
 }
 /* Initializes the game state.
 
-In future revisions, magic numbers will be replaced with constants and parameters. */ Room.prototype.initGame = function (){
+In future revisions, magic numbers will be replaced with constants and parameters. */
+Room.prototype.initGame = function (){
+
   console.log("Game initializing in " + this.name + "!");
   this.ballPos = [50,50];
   this.score = [0,0];
@@ -150,7 +166,7 @@ In future revisions, magic numbers will be replaced with constants and parameter
   this.ballV = [1,2];
   this.ballR = (1/20)*this.fieldSize[1];
   //height, width
-  this.paddleSize = [(1/5)*this.fieldSize[0], (1/15)*this.fieldSize[1]];
+  this.paddleSize = [3,(1/5)*this.fieldSize[1]]; 
 
   this.players[0].setPaddlePos(50);
   this.players[1].setPaddlePos(50);
@@ -160,13 +176,16 @@ In future revisions, magic numbers will be replaced with constants and parameter
 
 This will soon be phased out to support multiple game instances.
 
-Emits updateGame node event with paddle and ball position arrays. */ Room.prototype.sendGameState = function(){
+Emits updateGame node event with paddle and ball position arrays. */
+Room.prototype.sendGameState = function(){
   var paddles = [this.players[0].getPaddlePos(), this.players[1].getPaddlePos()];
-  io.sockets.in(this.name).volatile.emit('gameState', {paddle: paddles, ball: this.ballPos});
+  io.sockets.in(this.name).volatile.emit('gameState', {paddle: paddles, ball: this.ballPos, gameEvent: this.pendingEvent});
+this.pendingEvent = NOEVENT;
 }
 
 
-/* Sends an scoreUpdate event to all connected clients (will be phased out soon for a more modular approach */ Room.prototype.sendScore = function(){
+/* Sends an scoreUpdate event to all connected clients (will be phased out soon for a more modular approach */ 
+Room.prototype.sendScore = function(){
  //Still sending to everyone.
  io.sockets.in(this.name).emit('scoreUpdate', { score: this.score });
 }
