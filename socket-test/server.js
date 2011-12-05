@@ -263,10 +263,14 @@ Room.prototype.cacheGameState = function(){
   this.rBallPos[1].push(this.ballPos[1]);
 }
 
-//May be phased out
-//SQL database already has gameID, need ensure matched
+//Generating unique gameID
 Room.prototype.genGameID = function(){
-    var greatest = 0;
+  //Temporarily using unix time for gameID - highly unlikely to have duplicates
+  var foo = new Date;
+  var unixtime = parseInt(foo.getTime());
+  this.rGameID = unixtime;
+    
+    /*var greatest = 0;
     db.replays.find({},{gameID:1}).forEach(function(err, doc) {
         if(doc != null){
             if(doc.gameID > greatest){
@@ -275,7 +279,7 @@ Room.prototype.genGameID = function(){
         }
     });
     this.rGameID = greatest + 1;
-    
+    */
 }
 
 //Emitting current cached game information to database
