@@ -14,6 +14,7 @@ io.set('log level', 1); // reduce logging
 
 var gClients = [];
 var gRooms = new Array(); 
+var gRoomNames = [];
 var gNumRooms = 0; //Associative arrays are objects, objects don't have length. /*
 
 var NOEVENT = 0;
@@ -31,10 +32,10 @@ io.sockets.on('connection', function (aClient) {
   gClients.push(newClient);
 
   //Server needs to: emit a game list
-  aClient.emit('roomList', {rooms: gRooms, numRooms: gNumRooms});
   for(r in gRooms){
     console.log("Room: " + r);
   }
+  aClient.emit('roomList', {rooms: gRoomNames, numRooms: gNumRooms});
 
 
   aClient.on('joinRoom', function(data){
@@ -54,7 +55,8 @@ io.sockets.on('connection', function (aClient) {
     console.log("Room length now: " + gNumRooms);
     newRoom.joinRoom(newClient);
     newClient.currentRoom = newRoom;
-
+    
+    gRoomNames.push(newRoom.name);
     console.log("New room: " + gRooms[newRoom.name].getName() + ".");
   });
 
