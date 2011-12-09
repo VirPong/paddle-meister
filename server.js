@@ -10,7 +10,7 @@ app.listen(PORT);
 
 //set the sockets to listen on same port. 
 var io = sio.listen(app); 
-//io.set('log level', 1); // reduce logging
+io.set('log level', 1); // reduce logging
 
 var gClients = [];
 var gRooms = new Array(); 
@@ -165,7 +165,8 @@ Room.prototype.initGame = function (){
   this.fieldSize = [100,100];
   this.ballV = [1,2];
   this.ballR = (1/20)*this.fieldSize[1];
-  //height, width
+  //width, height
+
   this.paddleSize = [3,(1/5)*this.fieldSize[1]]; 
 
   this.players[0].setPaddlePos(50);
@@ -194,57 +195,66 @@ Room.prototype.sendScore = function(){
  This ball logic code originated from David Eva, slightly modified for use on the server. Needs tweaking. */
 
 Room.prototype.ballLogic = function(){
-
+  
   //Ball bouncing logic
   
-  if( this.ballPos[1]<0 || this.ballPos[1]>this.fieldSize[1]){
+  if( this.ballPos[1] - this.ballR < 0 || this.ballPos[1] + this.ballR >this.fieldSize[1]){
     this.ballV[1] = -this.ballV[1]; //change gBallPos[1] direction if you go off screen in y direction ....
     this.pendingEvent = WALLBOUNCE;
    }
   
   // Paddle Boundary Logic
+  // Left paddle
+  if(this.ballPos[0] == this.paddleSize[0] &&  //Left paddle's x
+     this.ballPos[1] >= this.players[0].getPaddlePos() && 
+     this.ballPos[1] <= (this.players[0].getPaddlePos() + this.paddleSize[1])) //Left paddle's y range
+    { 
+       console.log((this.fieldSize[0] - this.paddleSize[0]) + " paddlex: " + this.paddleSize[0]);
+       this.ballV[0] = -this.ballV[0]; //changes x direction
+       this.pendingEvent = PADDLEBOUNCE;
+    }
+
+  else if(this.ballPos[0] < this.paddleSize[0] &&
+          this.ballPos[0] > 0 &&           //X boundary of the edges
+         (this.ballPos[1] == this.players[0].getPaddlePos() || 
+          this.ballPos[1] == (this.players[0].getPaddlePos() + this.paddleSize[1])) //Y boundary of the edges
+         ){ //top and bottom of left paddle
+	    this.ballV[1] = -this.ballV[1]; //changes y direction
+	    this.pendingEvent = PADDLEBOUNCE;
+	  }
   
-  // changed all these numbers to more reasonable also, these kinda stuff should also be fields but we can
-  // think about that later
+
+  // Right paddle
+
+  if(this.ballPos[0] == this.fieldSize[0] - this.paddleSize[0] && //Right paddle's x
+     this.ballPos[1] >= this.players[1].getPaddlePos() &&
+     this.ballPos[1] <= (this.players[1].getPaddlePos() + this.paddleSize[1])) //Right paddle's y range
+    { 
+       this.ballV[0] = -this.ballV[0]; // changes x direction
+       this.pendingEvent = PADDLEBOUNCE;
+    }
+
+  else if(this.ballPos[0] > this.fieldSize[0] - this.paddleSize[0] &&
+          this.ballPos[0] < this.fieldSize[0] &&               //X boundary of the edges
+         (this.ballPos[1] == this.players[1].getPaddlePos() || 
+          this.ballPos[1] == (this.players[1].getPaddlePos() + this.paddleSize[1])) //Y boundary of the edges
+         ){ //top and bottom of right paddle
+	    this.ballV[1] = -this.ballV[1]; // changes y direction
+	    this.pendingEvent = PADDLEBOUNCE;
+	  }
   
-  if(this.ballPos[0] == this.paddleSize[1]){ 
-	if(this.ballPos[1] >= this.players[0].getPaddlePos() && this.ballPos[1] <= (this.players[0].getPaddlePos() + this.paddleSize[0])){ //if it hits the left paddle
-	   this.ballV[0] = -this.ballV[0];
-	   this.pendingEvent = PADDLEBOUNCE;
-	}
-  }
-  else if(this.ballPos[0] <= this.paddleSize[1]){ //top and bottom of left paddle
-	if(this.ballPos[1] == this.players[0].getPaddlePos() || this.ballPos[1] == (this.players[0].getPaddlePos() + this.paddleSize[0])){
-	   this.ballV[0] = -this.ballV[0];
-	   this.ballV[1] = -this.ballV[1];
-	   this.pendingEvent = PADDLEBOUNCE;
-	}
-  }
-  if(this.ballPos[0] == this.fieldSize[0] - this.paddleSize[1]){
-	if(this.ballPos[1] >= this.players[1].getPaddlePos() && this.ballPos[1] <= (this.players[1].getPaddlePos() + this.paddleSize[0])){ //if it hits the right paddle
-	   this.ballV[0] = -this.ballV[0];
-	   this.pendingEvent = PADDLEBOUNCE;
-	}
-  }
-   else if(this.ballPos[0] >= (this.fieldSize[0] - this.paddleSize[1])){ //top and bottom of right paddle
-	if(this.ballPos[1] >= this.players[1].getPaddlePos() && this.ballPos[1] <= (this.players[1].getPaddlePos() + this.paddleSize[0])){
-	   this.ballV[0] = -this.ballV[0];
-	   this.ballV[1] = -this.ballV[1];
-	   this.pendingEvent = PADDLEBOUNCE;
-	}
-  }
   
   // if ball goes out of frame reset in the middle and put to default speed and increment gScore...
   
-  if(this.ballPos[0] < -10){ //changed these numbers you had old ones so ball was going super far out of frame
+  if(this.ballPos[0] + this.ballR < 0){ //changed these numbers you had old ones so ball was going super far out of frame
     this.ballPos[0] = this.fieldSize[0]/2;
     this.ballPos[1] = this.fieldSize[1]/2;
-    this.ballV[0] = 1;
+    this.ballV[0] = -1;  // Changes the direction of the ball if Player 2 scored
     this.ballV[1] = 2;
     this.score[1] = this.score[1] + 1;
     this.sendScore();
   }
-  if(this.ballPos[0] >this.fieldSize[0] +10 ){ //changed these numbers you had old ones so ball was going super far out of frame
+  if(this.ballPos[0] + this.ballR > this.fieldSize[0] + 10){ //changed these numbers you had old ones so ball was going super far out of frame
     this.ballPos[0] = this.fieldSize[0]/2;
     this.ballPos[1] = this.fieldSize[1]/2;
     this.ballV[0] = 1;
