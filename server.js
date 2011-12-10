@@ -10,7 +10,7 @@ app.listen(PORT);
 
 //set the sockets to listen on same port. 
 var io = sio.listen(app); 
-io.set('log level', 1); // reduce logging
+//io.set('log level', 1); // reduce logging
 
 //Using mongojs to connect to the replays collection in the games database of mongodb
 var rDB = require('mongojs').connect('games',['replays']);
@@ -23,6 +23,7 @@ var gNumRooms = 0; //Associative arrays are objects, objects don't have length. 
 var NOEVENT = 0;
 var WALLBOUNCE = 1;
 var PADDLEBOUNCE = 2;
+var MAXSCORE = 7;
 var SCORE = 3;
 //  This gets called when someone connects to the server.
 //  The argument of the function is essentially a pointer to that particular client's socket. */ 
@@ -158,9 +159,13 @@ Room.prototype.joinRoom = function(aClient){
 /* This is the main game loop that is set to run every 50 ms. */ 
 Room.prototype.startGame = function(){
     var self = this;
-    setInterval(function() {
+    self.gameOn = true;
+    var gameInterval = setInterval(function() {
       self.ballLogic(); //Run ball logic simulation.
       self.sendGameState(); //Send game state to all sockets.
+      if(self.gameOn == false){
+        clearInterval(gameInterval);
+      }
     }, 50);
 }
 /* Initializes the game state.
@@ -197,83 +202,89 @@ this.pendingEvent = NOEVENT;
 /* Sends an scoreUpdate event to all connected clients (will be phased out soon for a more modular approach */ 
 Room.prototype.sendScore = function(){
  //Still sending to everyone.
+ console.log("(" + this.name + "): " + this.score[0] + " to " + this.score[1]);
  io.sockets.in(this.name).emit('scoreUpdate', { score: this.score });
+ if(this.score[0] == MAXSCORE || this.score[1] == MAXSCORE){
+   console.log("Game " + this.name + " has ended.");
+   io.sockets.in(this.name).emit('gameEnd');
+   this.gameOn = false;
+ }
 }
 
 /*
  This ball logic code originated from David Eva, slightly modified for use on the server. Needs tweaking. */
 
 Room.prototype.ballLogic = function(){
+
+    //Ball bouncing logic
+    
+    if( this.ballPos[1] - this.ballR < 0 || this.ballPos[1] + this.ballR >this.fieldSize[1]){
+      this.ballV[1] = -this.ballV[1]; //change gBallPos[1] direction if you go off screen in y direction ....
+      this.pendingEvent = WALLBOUNCE;
+     }
+    
+    // Paddle Boundary Logic
+    // Left paddle
+    if(this.ballPos[0] == this.paddleSize[0] &&  //Left paddle's x
+       this.ballPos[1] >= this.players[0].getPaddlePos() && 
+       this.ballPos[1] <= (this.players[0].getPaddlePos() + this.paddleSize[1])) //Left paddle's y range
+      { 
+         console.log((this.fieldSize[0] - this.paddleSize[0]) + " paddlex: " + this.paddleSize[0]);
+         this.ballV[0] = -this.ballV[0]; //changes x direction
+         this.pendingEvent = PADDLEBOUNCE;
+      }
   
-  //Ball bouncing logic
+    else if(this.ballPos[0] < this.paddleSize[0] &&
+            this.ballPos[0] > 0 &&           //X boundary of the edges
+           (this.ballPos[1] == this.players[0].getPaddlePos() || 
+            this.ballPos[1] == (this.players[0].getPaddlePos() + this.paddleSize[1])) //Y boundary of the edges
+           ){ //top and bottom of left paddle
+  	    this.ballV[1] = -this.ballV[1]; //changes y direction
+  	    this.pendingEvent = PADDLEBOUNCE;
+  	  }
+    
   
-  if( this.ballPos[1] - this.ballR < 0 || this.ballPos[1] + this.ballR >this.fieldSize[1]){
-    this.ballV[1] = -this.ballV[1]; //change gBallPos[1] direction if you go off screen in y direction ....
-    this.pendingEvent = WALLBOUNCE;
-   }
+    // Right paddle
   
-  // Paddle Boundary Logic
-  // Left paddle
-  if(this.ballPos[0] == this.paddleSize[0] &&  //Left paddle's x
-     this.ballPos[1] >= this.players[0].getPaddlePos() && 
-     this.ballPos[1] <= (this.players[0].getPaddlePos() + this.paddleSize[1])) //Left paddle's y range
-    { 
-       console.log((this.fieldSize[0] - this.paddleSize[0]) + " paddlex: " + this.paddleSize[0]);
-       this.ballV[0] = -this.ballV[0]; //changes x direction
-       this.pendingEvent = PADDLEBOUNCE;
+    if(this.ballPos[0] == this.fieldSize[0] - this.paddleSize[0] && //Right paddle's x
+       this.ballPos[1] >= this.players[1].getPaddlePos() &&
+       this.ballPos[1] <= (this.players[1].getPaddlePos() + this.paddleSize[1])) //Right paddle's y range
+      { 
+         this.ballV[0] = -this.ballV[0]; // changes x direction
+         this.pendingEvent = PADDLEBOUNCE;
+      }
+  
+    else if(this.ballPos[0] > this.fieldSize[0] - this.paddleSize[0] &&
+            this.ballPos[0] < this.fieldSize[0] &&               //X boundary of the edges
+           (this.ballPos[1] == this.players[1].getPaddlePos() || 
+            this.ballPos[1] == (this.players[1].getPaddlePos() + this.paddleSize[1])) //Y boundary of the edges
+           ){ //top and bottom of right paddle
+  	    this.ballV[1] = -this.ballV[1]; // changes y direction
+  	    this.pendingEvent = PADDLEBOUNCE;
+  	  }
+    
+    
+    // if ball goes out of frame reset in the middle and put to default speed and increment gScore...
+    
+    if(this.ballPos[0] + this.ballR < 0){ //changed these numbers you had old ones so ball was going super far out of frame
+      this.ballPos[0] = this.fieldSize[0]/2;
+      this.ballPos[1] = this.fieldSize[1]/2;
+      this.ballV[0] = -1;  // Changes the direction of the ball if Player 2 scored
+      this.ballV[1] = 2;
+      this.score[1] = this.score[1] + 1;
+      this.sendScore();
     }
-
-  else if(this.ballPos[0] < this.paddleSize[0] &&
-          this.ballPos[0] > 0 &&           //X boundary of the edges
-         (this.ballPos[1] == this.players[0].getPaddlePos() || 
-          this.ballPos[1] == (this.players[0].getPaddlePos() + this.paddleSize[1])) //Y boundary of the edges
-         ){ //top and bottom of left paddle
-	    this.ballV[1] = -this.ballV[1]; //changes y direction
-	    this.pendingEvent = PADDLEBOUNCE;
-	  }
-  
-
-  // Right paddle
-
-  if(this.ballPos[0] == this.fieldSize[0] - this.paddleSize[0] && //Right paddle's x
-     this.ballPos[1] >= this.players[1].getPaddlePos() &&
-     this.ballPos[1] <= (this.players[1].getPaddlePos() + this.paddleSize[1])) //Right paddle's y range
-    { 
-       this.ballV[0] = -this.ballV[0]; // changes x direction
-       this.pendingEvent = PADDLEBOUNCE;
+    if(this.ballPos[0] + this.ballR > this.fieldSize[0] + 10){ //changed these numbers you had old ones so ball was going super far out of frame
+      this.ballPos[0] = this.fieldSize[0]/2;
+      this.ballPos[1] = this.fieldSize[1]/2;
+      this.ballV[0] = 1;
+      this.ballV[1] = 2;
+      this.score[0] = this.score[0] + 1;
+      this.sendScore();
     }
-
-  else if(this.ballPos[0] > this.fieldSize[0] - this.paddleSize[0] &&
-          this.ballPos[0] < this.fieldSize[0] &&               //X boundary of the edges
-         (this.ballPos[1] == this.players[1].getPaddlePos() || 
-          this.ballPos[1] == (this.players[1].getPaddlePos() + this.paddleSize[1])) //Y boundary of the edges
-         ){ //top and bottom of right paddle
-	    this.ballV[1] = -this.ballV[1]; // changes y direction
-	    this.pendingEvent = PADDLEBOUNCE;
-	  }
-  
-  
-  // if ball goes out of frame reset in the middle and put to default speed and increment gScore...
-  
-  if(this.ballPos[0] + this.ballR < 0){ //changed these numbers you had old ones so ball was going super far out of frame
-    this.ballPos[0] = this.fieldSize[0]/2;
-    this.ballPos[1] = this.fieldSize[1]/2;
-    this.ballV[0] = -1;  // Changes the direction of the ball if Player 2 scored
-    this.ballV[1] = 2;
-    this.score[1] = this.score[1] + 1;
-    this.sendScore();
-  }
-  if(this.ballPos[0] + this.ballR > this.fieldSize[0] + 10){ //changed these numbers you had old ones so ball was going super far out of frame
-    this.ballPos[0] = this.fieldSize[0]/2;
-    this.ballPos[1] = this.fieldSize[1]/2;
-    this.ballV[0] = 1;
-    this.ballV[1] = 2;
-    this.score[0] = this.score[0] + 1;
-    this.sendScore();
-  }
-  
-  this.ballPos[0]+=this.ballV[0];
-  this.ballPos[1]+=this.ballV[1];
+    
+    this.ballPos[0]+=this.ballV[0];
+    this.ballPos[1]+=this.ballV[1];
 }
 
 /*
