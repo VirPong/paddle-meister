@@ -125,9 +125,11 @@ function Room() {
   this.fieldSize = []; // [fieldX, fieldY] size of the game field.
   this.paddleSize;// [paddleHeight, paddleWidth]
 
-  this.rPlayerPos = [[], []]; //[[player1], [player2]] height positions for replays
-  this.rBallPos = [[], []]; //[[ballX], [ballY]] ball positions for replays
+  //this.rPlayerPos = [[], []]; //[[player1], [player2]] height positions for replays
+  //this.rBallPos = [[], []]; //[[ballX], [ballY]] ball positions for replays
   this.rGameID; //the gameID that will be queried on replays
+  this.rIndex = 0; //to track replay docs
+  this.rDocs = []; //an array of replay docs
 }
 
 Room.prototype.getName = function(){
@@ -160,6 +162,7 @@ Room.prototype.joinRoom = function(aClient){
 Room.prototype.startGame = function(){
     var self = this;
     self.gameOn = true;
+    self.genGameID();  //generating gameID
     var gameInterval = setInterval(function() {
       self.ballLogic(); //Run ball logic simulation.
       self.sendGameState(); //Send game state to all sockets.
@@ -292,10 +295,14 @@ Helper functions for the rooms to communicate with the database
 Shelby Lee
 */
 Room.prototype.cacheGameState = function(){
-  this.rPlayerPos[0].push(this.paddlePos[0]);
+  this.rDocs.push({gameID: this.rGameID, index: rIndex, playerPos: this.paddlePos,
+		   ballPos: this.ballPos, scores: this.scores});
+  rIndex = rIndex + 1; //increment the index
+  
+  /*this.rPlayerPos[0].push(this.paddlePos[0]);
   this.rPlayerPos[1].push(this.paddlePos[1]);
   this.rBallPos[0].push(this.ballPos[0]);
-  this.rBallPos[1].push(this.ballPos[1]);
+  this.rBallPos[1].push(this.ballPos[1]);*/
 }
 
 //Generating unique gameID
@@ -319,5 +326,10 @@ this.rGameID = greatest + 1;
 
 //Emitting current cached game information to database
 Room.prototype.emitReplay = function(){
-    db.replays.save({gameID: this.rGameID, playersPos : this.rPlayerPos, ballPos : this.rBallPos});
+  //Take everything from the array and put the javascript objects into db
+  for(int i = 0; i < this.rDocs.length; i++){
+    db.replays.save(rDocs[i]);    
+  }
+
+  /*db.replays.save({gameID: this.rGameID, playersPos : this.rPlayerPos, ballPos : this.rBallPos});*/
 }

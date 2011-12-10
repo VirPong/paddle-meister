@@ -11,8 +11,9 @@ sys = require(process.binding('natives').util ? 'util' : 'sys')
 var io = sio.listen(app);
 var db = require('mongojs').connect('games',['replays']);
 
-var playerPos = []; //array to hold the player positions, 0 has array of p1pos and 1 p2pos
-var ballPos = []; //array holding ball positions; 0 has x-position, 1 has y-position
+//var playerPos = []; //array to hold the player positions, 0 has array of p1pos and 1 p2pos
+//var ballPos = []; //array holding ball positions; 0 has x-position, 1 has y-position
+var rDocs = []; //the javascript objects pulled from the database
 
 //Connection to client
 //We send static game information to the client for them to parse in the same way
@@ -26,7 +27,7 @@ io.sockets.on('connection', function(aClient){
   //Requesting gameID to query on
   aClient.on('watchGame', function(aGameID){
     this.queryReplay(aGameID);
-    aClient.volatile.emit('replayInfo', { playerPosition : playerPos, ball Position : ballPos});
+    aClient.volatile.emit('replayInfo', { replayInfo: rDocs});
   });
   
 }
@@ -37,13 +38,16 @@ io.sockets.on('connection', function(aClient){
 function queryReplay(aGameID){
   //this query says we're looking for the games that have the same gameID as our argument
   //we're going to leave our the mongodb generated index (_id) and the gameID
-  db.replays.find({gameID:aGameID}, {_id:0, gameID:0}).forEach(function(err, doc) {
+  db.replays.find({gameID:aGameID}, {_id:0, gameID:0}).sort().forEach(function(err, doc) {
      //We will assume that the information in the database is in order, because arrays are inserted
     if(doc != null) {  //don't want to run anything if it is null
-   
+      
+      rDocs.push(doc);
+      
       //The database store Javascript objects, we just want to hold onto them and emit them to client
-      playerPos = doc.playersPos;      //the array has entire game positions on it
-      ballPos = doc.ballPos;
+      //playerPos = doc.playersPos;      //the array has entire game positions on it
+      //ballPos = doc.ballPos;
+
       
     }
   });
