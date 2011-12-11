@@ -166,6 +166,7 @@ Room.prototype.startGame = function(){
     var gameInterval = setInterval(function() {
       self.ballLogic(); //Run ball logic simulation.
       self.sendGameState(); //Send game state to all sockets.
+      self.cacheGameState(); //caches game state to store into database.
       if(self.gameOn == false){
         clearInterval(gameInterval);
       }
@@ -211,6 +212,7 @@ Room.prototype.sendScore = function(){
    console.log("Game " + this.name + " has ended.");
    io.sockets.in(this.name).emit('gameEnd');
    this.gameOn = false;
+   this.emitReplay(); //emit cached information to database
  }
 }
 
