@@ -40,12 +40,11 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \end{enumerate}
 \textbf{Alternatives:}\\
 \textbf{1.} A client requests connection with system\\
-\textbf{1a.} Scheduled system down
+\textbf{1a.} System is scheduled to be offline
 \begin{enumerate}
 \item Provide 48 hours notice of system going offline
 \item Client attempts to connect during system down
 \item System does not respond
-\item Client attempts to connect during system down
 \end{enumerate}
 \textbf{1b.} Unplanned system down
 \begin{enumerate}
@@ -62,26 +61,27 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \textbf{5a.} There are no avaliable games
 \begin{enumerate}
 \item System prompts client to create new game
+\item Client creates a new game and waits for another client to join
 \end{enumerate}
 
 
 
 \noindent \textbf{Scenario Title:} A client connecting to an open game.\\
-\textbf{Version:} 1.1\\
-\textbf{Actors:} Two clients, game state\\
-\textbf{Pre-conditions:} Both clients have access to the network and are connected to the system and have been served the list of open games, one client is unpaired in an open game\\
+\textbf{Version:} 1.0\\
+\textbf{Actors:} Client 1, Client 2, game state\\
+\textbf{Pre-conditions:} Both Client 1 and Client 2 have access to the network and are connected to the system and have been served the list of open games, one client is unpaired in an open game\\
 \textbf{Post-conditions:}Clients are ready to play a game together\\
 \textbf{Scenario:}
 \begin{enumerate}
-\item Client communicates to server which open game it wants to play.
-\item System opens communication between client and client already in open game.
+\item Client 2 communicates to server which open game it wants to play.
+\item System opens communication between Client 2 and Client 1.
 \item System initializes the game state.
-\item The game is started
-\item Paddle position is trasnmitted from client to the system
-\item System transmits clients' paddle position, ball position, and score data back to client
+\item The game is started.
+\item Paddle position is trasnmitted from both Clients to the system
+\item System transmits Client 1's and Client 2's paddle position, ball position, and score data back to both Clients.
 \end{enumerate}
 \textbf{Alternatives:}\\
-\textbf{2.} System opens communication between client and client already in open game.\\
+\textbf{2.} System opens communication between Client 2 and Client 1.\\
 \textbf{2a.} Client in open game rejects system request to start game 
 \begin{enumerate}
 \item System informs client that request to join was denied
@@ -92,13 +92,33 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \begin{enumerate}
 \item System freezes game state
 \item System informs connected client of opponent disconnect
-\item System prompts disconnected client for reconnect
+\item Disconnected client tries to reconnect
 \item System offers connected client to start new game
 \item Connected client accepts new game
 \item Game state is cleared
 \item System informs disconnected client of game end
 \end{enumerate}
 \emph{Return to 1}\\
+\textbf{5.} The game is started.
+\textbf{5a.} A client disconnects from the system
+\begin{enumerate}
+\item System freezes game state
+\item System informs connected client of opponent disconnect
+\item Disconnected client tries to reconnect
+\item System offers connected client to start new game
+\item Connected client accepts new game
+\item Game state is cleared
+\item System informs disconnected client of game end
+\end{enumerate}
+\emph{Return to 1}\\
+\textbf{6.} The game is started.
+\textbf{6a.} A data package is dropped by the system
+\begin{enumerate}
+\item System freezes game state
+\item System attempts to resend the package to both Clients
+\item Borh players recieve data package
+\item Game state is restored and game continues
+\end{enumerate}
 
 \noindent \textbf{Scenario Title:} Store player position in repository.\\
 \textbf{Version:} 1.0\\
@@ -110,14 +130,22 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \item Client moves, position tracker sends data to system.
 \item System communicates updated position to repository.
 \item Repository logs position of client and adds time stamp.
-\item Continues until system or client ends game.
+\item Continues until an end game state is reached or client ends game.
 \item System reports end of game to repository.
 \item Repository logs end of game with time stamp.
 \end{enumerate}
-
+\textbf{Alternatives:}\\
+\textbf{1.} Client moves, position tracker sends data to system.
+\textbf{1a.} Client is unable to send data to the system
+\begin {enumerate}
+\item System pauses game state
+\item Client retries sending the data
+\item System recieves the data
+\item Game state resumes
+\end {enumerate}
 
 \noindent \textbf{Scenario Title:} Update player scores.\\
-\textbf{Version:}1.1\\
+\textbf{Version:}1.0\\
 \textbf{Actors:} Client1, Client2, Repository, Game Logic\\
 \textbf{Pre-conditions:} System Operational, Client1 and Client2 logged in and participating in game \\
 \textbf{Post-conditions:} Game continues\\
@@ -134,6 +162,18 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \item Game repository sends current score to client interface.
 \item Client interface displays current score
 \end{enumerate}
+\textbf{Alternatives}\\
+\textbf{4.} Game logic determines no collision. 
+\textbf{4a.} Game logic deterines a collision
+\begin {enumerate}
+\item The ball changes direction and a client moves to hit it
+\emph {Repeat until no collsion is detected}
+\end {enumerate}
+\textbf{6.} Game repository increments client1’s point.
+\textbf{6a.} The Repository is down or unable to update player score
+\begin{enumerate}
+\item System continues the game wthout storing score for replay
+\end{enumerate}
 
 \noindent \textbf{Scenario Title:} Accessing a replay from the repository.\\
 \textbf{Version:} 1.0\\
@@ -149,6 +189,13 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \item Game logic rebuilds ball positions based from recorded positions.
 \item System sends data to user interface to be viewed.
 \end{enumerate}
+\textbf{Alternatives}\\
+\textbf{2.} Game repository
+\textbf{2a.} Requested game cannot be watched
+\begin{enumerate}
+\item Game repository informs user of error
+\item User selects another game to view
+\end {enumerate}
 
 \noindent \textbf{Scenario Title:} Two clients with simple reactions are playing a game until a winner is determined. \\
 \textbf{Version:}2.0\\
@@ -199,19 +246,23 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \subsection{System Sequence Diagram}
 Our highest priority use case was that of any client connected to the system. We have illustrated it in the following System Sequence Diagram. The diagram shows the client requesting a connection with the system, the system accepting that connection. The system proceeds to create a clientID to identifiy the client. The system then sends the clientID to the client along with a ready signal. The system then reports avaliable games to the client. 
 \begin{center} \includegraphics{SSD.pdf} \end{center} 
+
 \section{Nonfunctional Requirements}
 \begin{itemize}
-\item The desired communication time between a phone and server should be process and stored with less than a 75 nanosecond lag-time.
+\item The desired communication time between a phone and server should be processed and stored with less than a 75 nanosecond lag-time.
 \item The server should be able to handle at least 10 simultaneous conversations (games) without failure. 
 \item If the server is unable to store game data, we will inform client so that the client may present the user with a message stating that the data will not be stored (high scores, replay information, etc.), but otherwise gameplay will remain unaffected. 
 \item We will also plan on having two types of computer-programmed players. One will simply track ball movement, and the other with more randomization. 
 \item Ideally we'd have players determine the size of the playing field, and that size would automatically create a ratio that fits to the client interface. 
 \end{itemize}
 These secondary features will bring out the performance and ability of our server and increase the game options Vir-Pong players are afforded. 
+
 \section{Domain Analysis}
 The domain of our problem consists largely of a client, game, and a lobby. We want the lobby, our conceptualization of a server, to connect clients to games.\\
 \begin{center}\includegraphics{DomAnaUML.pdf} \end{center} 
 A client is recognized mainly by the device used in connecting with the lobby. This device is assigned a clientID by the lobby in order to track user interactions with the system. At any one point in time, a client can be either a player or an observer. A client can easily switch between these definitions, but will always retain their clientID while connected. Such is why we have made player and spectators conceptual classes of the generic class client. A theoretically infinite amount of spectators can observe a game, but only two players can play one game. The lobby that connects players and observers to games can host a theoretically infinite amount of games at any one given moment, but all games are tagged back to one lobby. Each game is associated with a single game state. This game state holds the positions of the paddles and the ball. The game state only exists during an instance of the game and, quite essentially, holds the state of a game. Our definition of a game state is the position of paddles and the ball. This game state builds a replay. Any number of spectators can watch any number of these replays. 
+
+\section{Interaction Diagram}
 
 \section{Implementation}
 \subsection{Style Guide}
@@ -293,20 +344,20 @@ Git (using 1.7.5.4)
 \item Connection to the Internet. 
 \end{itemize}
 Instructions:
-Each line is a unix command, and so each of these commands must be typed into a shell of some sort, such as BASH or ZSH (using BASH). Alternatively, these commands can be easily generated into a BASH shell script quite easily of so desired.
+Each line is a unix command, and so each of these commands must be typed into a shell of some sort, such as BASH or ZSH (using BASH). Alternatively, these commands can be easily generated into a BASH shell script quite easily if so desired.
 
 To install node and the node package manager (npm):
 
 \begin{verbatim}
-echo 'export PATH=$HOME/local/bin:$PATH' >> ~/.bashrc
-. ~/.bashrc
-mkdir ~/local
-mkdir ~/node-v0.4.9
-cd ~/node-v0.4.9
-curl http://nodejs.org/dist/node-v0.4.9.tar.gz | tar xz --strip-components=1
-./configure --prefix=~/local
-make install # ok, fine, this step probably takes more than 30 seconds...
-curl http://npmjs.org/install.sh | sh
+> echo 'export PATH=$HOME/local/bin:$PATH' >> ~/.bashrc
+> . ~/.bashrc
+> mkdir ~/local
+> mkdir ~/node-v0.4.9
+> cd ~/node-v0.4.9
+> curl http://nodejs.org/dist/node-v0.4.9.tar.gz | tar xz --strip-components=1
+> ./configure --prefix=~/local
+>make install
+>curl http://npmjs.org/install.sh | sh
 \end{verbatim}
 
 To install the express web framework and socket.io:
@@ -329,7 +380,7 @@ First, clone the paddle-meister repository using git:
 git clone git://github.com/VirPong/paddle-meister.git
 \end{verbatim}
 
-Then, navigate to the socket-test folder and execute
+Then, navigate to the socket-test folder and execute:
 
 \begin{verbatim}
 node server.js
@@ -368,7 +419,7 @@ The node.js server framework is event-driven, so naturally design has been focus
 For example, there are connect, disconnect, updatePaddle, startGame, and other such events that are implemented both server- and client-side.
 
 \subsection{Data Storage}
-The data we’re storing is specific to games and the players of each. This data is limited to usernames, player positions, gameIDs, and scores. This information will be stored in the noSQL database, mongodb. We choose to use mongodb because it is not only better for real-time, online, multi-player applications, but it has a loose schema that allows us to change the size and information of each document as we will.
+The data we are storing is specific to games and the players of each. This data is limited to usernames, player positions, gameIDs, and scores. This information will be stored in the noSQL database, mongodb. We choose to use mongodb because it is not only better for real-time, online, multi-player applications, but it has a loose schema that allows us to change the size and information of each document as we will.
 
 This information will be placed in one collection replays. The replays collection in our database will hold game positions and collision data so that we can reverse engineer games as ‘replays’ by pulling out the position data of players and applying current game logic. \\
 
