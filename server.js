@@ -9,7 +9,7 @@ sio = require('socket.io');
 app.listen(PORT);
 
 //set the sockets to listen on same port. 
-var io = sio.listen(app); 
+//var io = sio.listen(app); 
 //io.set('log level', 1); // reduce logging
 
 //Using mongojs to connect to the replays collection in the games database of mongodb
@@ -268,17 +268,29 @@ Room.prototype.ballLogic = function(){
     
     if(this.ballPos[0] + this.ballR < 0){ //changed these numbers you had old ones so ball was going super far out of frame
       this.ballPos[0] = this.fieldSize[0]/2;
-      this.ballPos[1] = this.fieldSize[1]/2;
+      this.ballPos[1] = Math.floor(Math.random()*(this.fieldSize[1]-2))+1; //Randomize starting y pos(1 to fieldsize -1 to account for boundry issues)
       this.ballV[0] = -1;  // Changes the direction of the ball if Player 2 scored
-      this.ballV[1] = 2;
+      var dir = Math.floor(Math.random()*2);// random direction variable(1 or 0)  
+      if(dir == 0){
+      	dir = -2;//ball direction is up
+      }else{
+	dir = 2;//ball direction is down
+      }
+      this.ballV[1] = dir;
       this.score[1] = this.score[1] + 1;
       this.sendScore();
     }
     if(this.ballPos[0] + this.ballR > this.fieldSize[0] + 10){ //changed these numbers you had old ones so ball was going super far out of frame
       this.ballPos[0] = this.fieldSize[0]/2;
-      this.ballPos[1] = this.fieldSize[1]/2;
+      this.ballPos[1] = Math.floor(Math.random()*(this.fieldSize[1]-2))+1; //Randomize starting y pos(1 to fieldsize -1 to account for boundry issues)
       this.ballV[0] = 1;
-      this.ballV[1] = 2;
+      var dir = Math.floor(Math.random()*2);// random direction variable(1 or 0)       
+      if(dir == 0){
+      	dir = -2;//ball direction is up
+      }else{
+	dir = 2;//ball direction is down
+      }
+      this.ballV[1] = dir;
       this.score[0] = this.score[0] + 1;
       this.sendScore();
     }
