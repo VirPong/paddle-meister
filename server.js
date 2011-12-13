@@ -14,7 +14,12 @@ io.set('log level', 1); // reduce logging
 
 //Using mongojs to connect to the replays collection in the games database of mongodb
 var rDB = require('mongojs').connect('games',['replays']);
+
+//For connecting to the user database -- db-mysql
+//Remember, mysql_client needs to be installed,
+//ubuntu package libmysqlclient16-dev will do it!
 var mysql = require('db-mysql');
+//SQL Database information -- from Web team.
 var sqlDatabase = new mysql.Database({
     hostname: 'localhost',
     user: 'root',
