@@ -27,8 +27,21 @@ io.sockets.on('connection', function(aClient){
   //Requesting gameID to query on
   aClient.on('watchGame', function(aGameID){
     this.queryReplay(aGameID);
-    aClient.volatile.emit('replayInfo', { replayInfo: rDocs});
+    this.watchGame(aClient);
+    //aClient.volatile.emit('replayInfo', { replayInfo: rDocs});
   });
+
+  //Watch from the array - streaming because stored information too large
+  watchGame = function(aClient){
+    i = 0;
+    var replayInterval = setInterval( function(), {
+      aClient.volatile.emit('replayInfo', rDocs[i]);
+      i = i +1;
+      if(i == rDocs.length -1){
+        clearInterval(replayInterval);
+      }
+    }, 100);
+  }
   
 }
 
