@@ -28,7 +28,7 @@ var gNumRooms = 0; //Associative arrays are objects, objects don't have length.
 var NOEVENT = 0;
 var WALLBOUNCE = 1;
 var PADDLEBOUNCE = 2;
-var MAXSCORE = 3;
+var MAXSCORE = 2;
 var SCORE = 3;
 
 //  This gets called when someone connects to the server.
@@ -240,7 +240,7 @@ Room.prototype.startGame = function(){
     var gameInterval = setInterval(function() {
       self.ballLogic(); //Run ball logic simulation.
       self.sendGameState(); //Send game state to all sockets.
-      self.cacheGameState(); //caches game state to store into database.
+      //self.cacheGameState(); //caches game state to store into database.
       if(self.gameOn == false){
         clearInterval(gameInterval);
       }
@@ -274,6 +274,10 @@ Emits updateGame node event with paddle and ball position arrays. */
 Room.prototype.sendGameState = function(){
   var paddles = [this.players[0].getPaddlePos(), this.players[1].getPaddlePos()];
   io.sockets.in(this.name).volatile.emit('gameState', {paddle: paddles, ball: this.ballPos, gameEvent: this.pendingEvent});
+  this.rDocs.push({index: this.rIndex, paddle: paddles,
+		   ball: [this.ballPos[0], this.ballPos[1]], scores: [this.score[0], this.score[1]]});
+  this.rIndex = this.rIndex + 1; //increment the index
+  console.log("Ballx: " + this.ballPos[0] + "//" + this.rDocs[this.rDocs.length - 1].ball[0]);
 this.pendingEvent = NOEVENT;
 }
 
@@ -437,5 +441,5 @@ Room.prototype.genGameID = function(){
 //Emitting current cached game information to database
 Room.prototype.emitReplay = function(){
   //Simply putting the array into the database
-  rDB.replays.save({gameID: rGameID, replayDocs: rDocs});
+  rDB.replays.save({gameID: this.rGameID, replayDocs: this.rDocs});
 }
