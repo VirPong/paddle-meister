@@ -11,6 +11,7 @@ var io = sio.listen(app);
 var db = require('mongojs').connect('games',['replays']); //db connection
 
 var rDocs = []; //the javascript object pulled from the database
+var rGames = []; //the list of games client able to replay
 
 /*
   Client connects requesting a game based on its gameID. We send them an array of 
@@ -23,6 +24,8 @@ io.sockets.on('connection', function(aClient){
   console.log("Client is connecting to replays.");
   client = new Client(aClient, "guest");
   //client.socket.emit('getting stuff'); //test emission
+  buildReplayList(); 
+  aClient.volatileEmit('games', rGames);  //emit list of games with replays
   
   //Requesting gameID to query on
   aClient.on('watchGame', function(aGameID){
@@ -56,4 +59,13 @@ function queryReplay(aGameID){
       rDocs = doc;
     }
   });
+}
+
+//Helper function to build list of all repayable games
+function buildReplayList (){
+  db.replays.find({}, {gameID:1}).forEach(function, err, doc) {
+    if(doc != null){
+      rGames.push(doc.gameID);
+    }
+  }
 }
