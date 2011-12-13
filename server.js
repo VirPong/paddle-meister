@@ -307,6 +307,7 @@ Room.prototype.ballLogic = function(){
 Helper functions for the rooms to communicate with the database
 Shelby Lee
 */
+//Caches game state into array on every emit to client
 Room.prototype.cacheGameState = function(){
   var paddles = [this.players[0].getPaddlePos(), this.players[1].getPaddlePos()];
   this.rDocs.push({index: this.rIndex, playerPos: paddles,
