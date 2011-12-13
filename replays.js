@@ -38,7 +38,7 @@ io.sockets.on('connection', function(aClient){
 function queryReplay(aGameID){
   //this query says we're looking for the games that have the same gameID as our argument
   //we're going to leave our the mongodb generated index (_id) and the gameID
-  db.replays.find({gameID:aGameID}, {_id:0, gameID:0}).sort().forEach(function(err, doc) {
+  db.replays.find({gameID:aGameID}, {_id:0, gameID:0}).sort({index:1}).forEach(function(err, doc) {
      //We will assume that the information in the database is in order, because arrays are inserted
     if(doc != null) {  //don't want to run anything if it is null
       
