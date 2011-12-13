@@ -23,9 +23,8 @@ io.sockets.on('connection', function(aClient){
 
   console.log("Client is connecting to replays.");
   client = new Client(aClient, "guest");
-  //client.socket.emit('getting stuff'); //test emission
   buildReplayList(); 
-  aClient.volatileEmit('games', rGames);  //emit list of games with replays
+  aClient.volatile.emit('games', {names: rGames});  //emit list of games with replays
   
   //Requesting gameID to query on
   aClient.on('watchGame', function(aGameID){
