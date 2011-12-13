@@ -14,6 +14,13 @@ io.set('log level', 1); // reduce logging
 
 //Using mongojs to connect to the replays collection in the games database of mongodb
 var rDB = require('mongojs').connect('games',['replays']);
+var mysql = require('db-mysql');
+var sqlDatabase = new mysql.Database({
+    hostname: 'localhost',
+    user: 'root',
+    password: 'sawinrocks',
+    database: 'db2'
+})
 
 var gClients = [];
 var gRooms = new Array(); 
@@ -25,6 +32,7 @@ var WALLBOUNCE = 1;
 var PADDLEBOUNCE = 2;
 var MAXSCORE = 7;
 var SCORE = 3;
+
 //  This gets called when someone connects to the server.
 //  The argument of the function is essentially a pointer to that particular client's socket. */ 
 io.sockets.on('connection', function (aClient) {
@@ -32,7 +40,6 @@ io.sockets.on('connection', function (aClient) {
   console.log("Client connecting.");
 
   var newClient = new Client(aClient, "Bobothy");
-  newClient.socket.emit('yeahboi');
   gClients.push(newClient);
 
   //Server needs to: emit a game list
@@ -41,7 +48,22 @@ io.sockets.on('connection', function (aClient) {
   }
   aClient.emit('roomList', {rooms: gRoomNames, numRooms: gNumRooms});
 
-
+  aClient.on('authentication', function(data){
+    sqlDatabase.connect(function(error) {
+        if (error) {
+            return console.log('CONNECTION error: ' + error);
+        }
+        this.query('SELECT * FROM Customer WHERE username = \"' + username + '\" AND (password = \"' + password + '\" OR pin = \"' + password + '\")').
+            execute(function(error, rows, cols) {
+                    if (error) {
+                            console.log('ERROR: ' + error);
+                            return;
+                    }
+                    console.log(rows.length + ' ROWS found');
+            });
+    }); 
+  });
+  
   aClient.on('joinRoom', function(data){
     aClient.join(data.name); //Joining socket.io 'room'
     newClient.currentRoom = gRooms[data.name];
@@ -211,6 +233,39 @@ Room.prototype.sendScore = function(){
  if(this.score[0] == MAXSCORE || this.score[1] == MAXSCORE){
    console.log("Game " + this.name + " has ended.");
    io.sockets.in(this.name).emit('gameEnd');
+   ///////////////////////////////////////////////////////////////////
+   sqlDatabase.connect(function(error){
+    if (error) {
+        return console.log('CONNECTION error: ' + error);
+    }
+    this.query().
+        insert('GamesPlayed', 
+            ['username1', 'username2', 'score1', 'score2', 'win'], 
+            ['Danger', 'The Odds', '7', '0', 'Danger']
+        ).
+        execute(function(error, result) {
+                if (error) {
+                        console.log('ERROR: ' + error);
+                        return;
+                }
+                console.log('GENERATED id: ' + result.id);
+        });
+    });
+   ///////////////////////////////////////////////////////////////////
+//    sqlDatabase.connect(function(error) {
+//        if (error) {
+//            return console.log('CONNECTION error: ' + error);
+//        }
+//        this.query('INSERT INTO GamesPlayed \"' + username1 + '\",\"' + username2 + '\",\"' + score1 + '\",\"' + score2 + '\",\"' + username_winner + '\"'). 
+//            execute(function(error, rows, cols) {
+//                    if (error) {
+//                            console.log('ERROR: ' + error);
+//                            return;
+//                    }
+//                    console.log(rows.length + ' ROWS found');
+//            });
+//    }); 
+   ///////////////////////////////////////////////////////////////////
    this.gameOn = false;
 
    this.emitReplay(); //emit cached information to database
