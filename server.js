@@ -28,7 +28,7 @@ var gNumRooms = 0; //Associative arrays are objects, objects don't have length.
 var NOEVENT = 0;
 var WALLBOUNCE = 1;
 var PADDLEBOUNCE = 2;
-var MAXSCORE = 7;
+var MAXSCORE = 3;
 var SCORE = 3;
 
 //  This gets called when someone connects to the server.
@@ -106,6 +106,10 @@ io.sockets.on('connection', function (aClient) {
       newClient.setPaddlePos(aData.pos);
       console.log(newClient.name + " pos:" + newClient.getPaddlePos());
     }
+  });
+  
+  aClient.on('disconnect', function(data){
+    //Call delete client?
   });
 
 });
@@ -279,21 +283,36 @@ this.pendingEvent = NOEVENT;
 /* Sends an scoreUpdate event to all connected clients (will be phased out soon for a more modular approach */ 
 Room.prototype.sendScore = function(){
  //Still sending to everyone.
+ var self = this;
+
  console.log("(" + this.name + "): " + this.score[0] + " to " + this.score[1]);
  io.sockets.in(this.name).emit('scoreUpdate', { score: this.score });
  if(this.score[0] == MAXSCORE || this.score[1] == MAXSCORE){
+   var winner;
+   if(this.score[0] == MAXSCORE){
+     winner = this.players[0].name;
+   }
+   else if(this.score[1] == MAXSCORE){
+     winner = this.players[1].name;
+   }
+
    console.log("Game " + this.name + " has ended.");
    io.sockets.in(this.name).emit('gameEnd');
    
    ///////////////////////////////////////////////////////////////////
-   sqlDatabase.connect(function(error){
+   new mysql.Database({
+      hostname: 'localhost',
+      user: 'root',
+      password: 'sawinrocks',
+      database: 'db2'
+   }).connect(function(error){
     if (error) {
         return console.log('CONNECTION error: ' + error);
     }
     this.query().
         insert('GamesPlayed', 
             ['username1', 'username2', 'score1', 'score2', 'win'], 
-            ['Danger', 'The Odds', '7', '0', 'Danger']
+            [self.players[0].name, self.players[1].name, self.score[0], self.score[1], winner]
         ).
         execute(function(error, result) {
                 if (error) {
@@ -303,21 +322,6 @@ Room.prototype.sendScore = function(){
                 console.log('GENERATED id: ' + result.id);
         });
     });
-   ///////////////////////////////////////////////////////////////////
-//    sqlDatabase.connect(function(error) {
-//        if (error) {
-//            return console.log('CONNECTION error: ' + error);
-//        }
-//        this.query('INSERT INTO GamesPlayed \"' + username1 + '\",\"' + username2 + '\",\"' + score1 + '\",\"' + score2 + '\",\"' + username_winner + '\"'). 
-//            execute(function(error, rows, cols) {
-//                    if (error) {
-//                            console.log('ERROR: ' + error);
-//                            return;
-//                    }
-//                    console.log(rows.length + ' ROWS found');
-//            });
-//    }); 
-   ///////////////////////////////////////////////////////////////////
    this.gameOn = false;
 
    this.emitReplay(); //emit cached information to database
