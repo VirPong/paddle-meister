@@ -310,8 +310,8 @@ Shelby Lee
 //Caches game state into array on every emit to client
 Room.prototype.cacheGameState = function(){
   var paddles = [this.players[0].getPaddlePos(), this.players[1].getPaddlePos()];
-  this.rDocs.push({index: this.rIndex, playerPos: paddles,
-		   ballPos: this.ballPos, scores: this.score});
+  this.rDocs.push({index: this.rIndex, paddle: paddles,
+		   ball: this.ballPos, scores: this.score});
   this.rIndex = this.rIndex + 1; //increment the index
 }
 
