@@ -473,68 +473,28 @@ The method used to test the pong game logic was through the JSBin website. JSBin
 
 Server networking was tested primarily with Google Chrome’s JavaScript inspector, as well as the node.js debug mode. There was, of course, plenty of trial-and-error.
 
-\section{Planning and Reflection}
-\subsection{Schedule}
-\begin{itemize}
-	\item Oct 7 -- A database implemented on the server.
-	\begin{itemize}
-		\item  Be able to have the server do a simple query from the mongoDB database and display it.
-		\item This goal was not met on time because the querying protocol was more complex than originally anticipated. It was completed by the following week.
-	\end{itemize}
-	\item Oct 7 -- Get the server up and running. 
-	\begin{itemize}
-		\item Be able to have a server that provides text or visual response to simple sample packets from other computers and relays sample information from the database.
-		\item This goal was met on time
-	\end{itemize}
-	\item Oct 11 -- Basic server communication to other devices. 
-	\begin{itemize}
-		\item Have a proof of concept for devices on the Android and iOS platforms to be able to communicate with the server. Have the clients be able to display information queried from the mongoDB database by communicating with the server.
-		\item This goal was not met on time due to unforseen difficulties in handling events. Was met within the week.
-	\end{itemize}
-	\item Oct 17 -- Simple game engine/logic working.
-	\begin{itemize}
-		\item Translate the rules of two-player (non-computer opponents) pong into JavaScript code that the server can use. Most likely will test on a browser such as Chrome or Chromium first.
-		\item This goal was not met on time because the code we were building out game logic around was difficult to understand, prompting various changes in the source of the programs game logic code.
-	\end{itemize}
-	\item Nov 4 -- Real-time game streaming on web browsers.
-	\begin{itemize}
-		\item Be able to watch a game that is happening between two other clients on a third client (most likely a browser at first
-		\item Dropped. We no longer believe we have the capacity to impliment streaming. We will instead devote our energies to the replay feature.
-	\end{itemize}
-	\item Nov 4 -- More robust communication between devices
-	\begin{itemize}
-		\item Sturdy and smooth communication for devices conversing through the server
-	\end{itemize}
-	\item Nov 11 -- Be able to replay a game using mongoDB stored information
-	\begin{itemize}
-		\item Read data stored in the main database and send it to the website interface to be viewed as a replay.
-	\end{itemize}
-	\item Nov 18 -- Track scores within a game
-	\begin{itemize}
-		\item During gameplay, incrementation of scores will be sent to the database in order to update the client's interface.
-	\end{itemize}
-	\item Nov 20 -- Generate a simple computer opponent
-	\begin{itemize}
-		\item Be able to play against an intelligent AI in 'practice mode.' The AI will do more than simply follow the ball.		
-	\end{itemize}
-	\item Dec 7 -- Fully functioning back end for Vir-Pong
-	\begin{itemize}
-		\item Have all functional requirements working optimally and all secondary features integrated in a finished product		
-	\end{itemize}
-\end{itemize}
-
-\subsection{Challenges}
+\section{Reflections}
+\subsection{Technical Challenges}
 \begin{itemize}
 	\item Communication -- simple communication between the phones and server was incredibly challenging. Getting the communication to register on both the server and the phone took a great deal of debugging. Extra research yielding progress and allowed communication to flow smoothly. In retrospect, it would have probably been beneficial to just pick the most documented and widely-used communication library and worked through it. That being said, the current communication library has been working well since we broke through the "wall" of problems.
-	\item Game logic -- the code used as a basis for game logic was not well documented and took a great deal of effort and time to understand the code's implementation, as well as how we could make use of it. It would have probably been better to just write the game logic from scratch, which would not have been too hard since pong was one of the first arcade games ever made.
+	\item Game logic -- the code used as a basis for game logic was not well documented and took a great deal of effort and time to understand the code's implementation, as well as how we could make use of it. It would have probably been better to just write the game logic from scratch, which would not have been too hard since pong was one of the first arcade games ever made.  When the game logic was moved onto the server it could not be easily tested because the server was down after testing and being updated with the code for multiple rooms.  We also relied on the web team in order to view the game and test the logic which forced us to code ot be able to test it in any way for a while after.  The game logic on the server was written using arrays for variables, e.g. paddleSize[x,y] would be the paddle x width and the paddle y height and working with system made it very easy to accidently use y where we wanted x.  This lead to several confusing errors in game play that took us a bit of time to correct.
+
 	
 \end{itemize}
 
-\subsection{Future milestones and Member Assignments}
+\subsection{Engineering techniques used}
 \begin{itemize}
-	\item Smooth communication between devices -- one device communicating to another through the server. Daniel will shoulder the primary responsibility and continue to work with the phone groups.
-	\item Polished game design -- adding finishing touches to game logic which include scores, timers, and computer opponents. Patrick and Ryan will continue to work on this project. 
-	\item Viewing replays -- the web browser interface will be able to view games played previously, as reverse engineered from player position. Shelby will work with the webUI team to continue working on this goal.
+	\item 
+\end{itemize}
+
+\subsection{What we would have done differently}
+\begin{itemize}
+	\item 
+\end{itemize}
+
+\subsection{Where we would go from here}
+\begin{itemize}
+	\item
 \end{itemize}
 
 
