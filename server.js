@@ -1,4 +1,4 @@
-/* Server.js v.0.3 for Vir-Pong, Inc */ /* Daniel Guilak -- daniel.guilak@gmail.com */
+/* server.js v.0.3 for vir-pong, inc */ /* daniel guilak -- daniel.guilak@gmail.com */
 
 var PORT = 3000; //Require the express framework (which creates a server) 
 var app = require('express').createServer(), sys = require(process.binding('natives').util ? 'util' : 'sys') //and 
@@ -19,13 +19,6 @@ var rDB = require('mongojs').connect('games',['replays']);
 //Remember, mysql_client needs to be installed,
 //ubuntu package libmysqlclient16-dev will do it!
 var mysql = require('db-mysql');
-//SQL Database information -- from Web team.
-var sqlDatabase = new mysql.Database({
-    hostname: 'localhost',
-    user: 'root',
-    password: 'sawinrocks',
-    database: 'db2'
-})
 
 var gClients = [];
 var gRooms = new Array(); 
@@ -49,7 +42,7 @@ io.sockets.on('connection', function (aClient) {
   aClient.on('auth', function(data){
     console.log("Authenticating: " + data.username + " " + data.password);
     authenticate(data.username, data.password, function(authenticated){
-      if(authenticated){
+      if(authenticated == true){
         console.log("Authentication granted for " + data.username);
         aClient.emit('authGranted'); 
         isAuthenticated = true;
@@ -79,11 +72,15 @@ io.sockets.on('connection', function (aClient) {
 
   aClient.on('createRoom', function(data){
     if(isAuthenticated){
-      console.log("I want to creat a new room: " + data.name + "!");
       var newRoom = new Room();
       newRoom.setName(data.name);
       newClient.clientType = 'player';
-      addRoom(newRoom);
+      addRoom(newRoom, function(newRoom){
+        
+
+
+
+      });
       aClient.join(data.name);
       console.log("Room length now: " + gNumRooms);
       newRoom.joinRoom(newClient);
@@ -113,34 +110,44 @@ io.sockets.on('connection', function (aClient) {
 
 });
 
-function addRoom(newRoom) {
+function addRoom(newRoom, callback) {
   gRooms[newRoom.getName()] = newRoom;
   gNumRooms = gNumRooms + 1;
+  callback();
 }
 
 function authenticate(user, pass, callback){
   var authenticated = false;
-  sqlDatabase.connect(function(error) {
-    console.log("Connecting to database for authentication!");
-    if (error) {
-      console.log('CONNECTION error: ' + error);
-      authenticated = false;
-    }
-    console.log("Querying");
-    this.query('SELECT * FROM Customer WHERE username = \"' + user + '\" AND (password = \"' + pass + '\" OR pin = \"' + pass + '\")').
+  //SQL Database information -- from Web team.
+  new mysql.Database({
+      hostname: 'localhost',
+      user: 'root',
+      password: 'sawinrocks',
+      database: 'db2'
+  }).connect(function(error) {
+      console.log("Connecting to database for authentication!");
+      if (error) {
+        console.log('CONNECTION error: ' + error);
+        authenticated = false;
+      }
+      console.log("Querying");
+      console.log('SELECT * FROM Customer WHERE username = \'' + user + '\' AND (password = \'' + pass + '\' OR pin = \'' + pass + '\')');
+      this.query('SELECT * FROM Customer WHERE username = \'' + user + '\' AND (password = \'' + pass + '\' OR pin = \'' + pass + '\')').
       execute(function(error, rows, cols) {
         if (error) {
           console.log('ERROR: ' + error);
-          console.log("Auth = false");
           authenticated = false;
-          callback(authenticated);
+          callback(false);
         } else {
-          console.log("Auth = true;");
-          authenticated = true; 
-          callback(authenticated);
+          if(rows.length != 0){
+            console.log("Authenticated or something!");
+            callback(true);
+          } else {
+            callback(false);
+          } 
         }
     });
-  }); 
+  });
 }
 
 //Client object -- would make sense to have player and spectator inheirit at some point.
@@ -162,6 +169,10 @@ Client.prototype.setPaddlePos = function(newPos) {
 
 Client.prototype.getPaddlePos = function() {
   return this.paddlePos;
+}
+
+Client.prototype.leaveRoom = function() {
+  this.currentRoom = null;
 }
 
 //////////////////////////////////////////////
@@ -214,6 +225,8 @@ Room.prototype.joinRoom = function(aClient){
   if(this.players.length == 2 && !this.gameOn){
     this.initGame();
     this.startGame();
+  } else if (this.players.length == 2 && this.gameOn){
+    aClient.emit('gameInfo', {names: [this.players[0].name, this.players[1].name]});
   }
 }
 
@@ -229,13 +242,14 @@ Room.prototype.startGame = function(){
       if(self.gameOn == false){
         clearInterval(gameInterval);
       }
-    }, 100);
+    }, 50);
 }
 /* Initializes the game state.
 
 In future revisions, magic numbers will be replaced with constants and parameters. */
 Room.prototype.initGame = function (){
-
+  io.sockets.in(this.name).emit('gameInfo', {names: [this.players[0].name, this.players[1].name]});
+  
   console.log("Game initializing in " + this.name + "!");
   this.ballPos = [50,50];
   this.score = [0,0];
@@ -270,6 +284,7 @@ Room.prototype.sendScore = function(){
  if(this.score[0] == MAXSCORE || this.score[1] == MAXSCORE){
    console.log("Game " + this.name + " has ended.");
    io.sockets.in(this.name).emit('gameEnd');
+   
    ///////////////////////////////////////////////////////////////////
    sqlDatabase.connect(function(error){
     if (error) {
