@@ -41,6 +41,7 @@ io.sockets.on('connection', function(aClient){
       i = i +1;
       if(i == rDocs.length -1){
         clearInterval(replayInterval);
+        aClient.emit('gameEnd');
       }
     }, 100);
   }
