@@ -199,8 +199,6 @@ function Room() {
   this.fieldSize = []; // [fieldX, fieldY] size of the game field.
   this.paddleSize;// [paddleHeight, paddleWidth]
 
-  //this.rPlayerPos = [[], []]; //[[player1], [player2]] height positions for replays
-  //this.rBallPos = [[], []]; //[[ballX], [ballY]] ball positions for replays
   this.rGameID; //the gameID that will be queried on replays
   this.rIndex = 0; //to track replay docs
   this.rDocs = []; //an array of replay docs
@@ -420,16 +418,12 @@ Room.prototype.ballLogic = function(){
 Helper functions for the rooms to communicate with the database
 Shelby Lee
 */
+//Caches game state into array on every emit to client
 Room.prototype.cacheGameState = function(){
   var paddles = [this.players[0].getPaddlePos(), this.players[1].getPaddlePos()];
-  this.rDocs.push({gameID: this.rGameID, index: this.rIndex, playerPos: paddles,
-		   ballPos: this.ballPos, scores: this.score});
+  this.rDocs.push({index: this.rIndex, paddle: paddles,
+		   ball: this.ballPos, scores: this.score});
   this.rIndex = this.rIndex + 1; //increment the index
-  
-  /*this.rPlayerPos[0].push(this.paddlePos[0]);
-  this.rPlayerPos[1].push(this.paddlePos[1]);
-  this.rBallPos[0].push(this.ballPos[0]);
-  this.rBallPos[1].push(this.ballPos[1]);*/
 }
 
 //Generating unique gameID
@@ -438,25 +432,10 @@ Room.prototype.genGameID = function(){
   var foo = new Date;
   var unixtime = parseInt(foo.getTime());
   this.rGameID = unixtime;
-    
-    /*var greatest = 0;
-db.replays.find({},{gameID:1}).forEach(function(err, doc) {
-if(doc != null){
-if(doc.gameID > greatest){
-greatest = doc.gameID;
-}
-}
-});
-this.rGameID = greatest + 1;
-*/
 }
 
 //Emitting current cached game information to database
 Room.prototype.emitReplay = function(){
-  //Take everything from the array and put the javascript objects into db
-  for(var i = 0; i < this.rDocs.length; i++){
-    rDB.replays.save(this.rDocs[i]);    
-  }
-
-  /*db.replays.save({gameID: this.rGameID, playersPos : this.rPlayerPos, ballPos : this.rBallPos});*/
+  //Simply putting the array into the database
+  rDB.replays.save({gameID: rGameID, replayDocs: rDocs});
 }
