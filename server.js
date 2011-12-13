@@ -9,8 +9,8 @@ sio = require('socket.io');
 app.listen(PORT);
 
 //set the sockets to listen on same port. 
-//var io = sio.listen(app); 
-//io.set('log level', 1); // reduce logging
+var io = sio.listen(app); 
+io.set('log level', 1); // reduce logging
 
 //Using mongojs to connect to the replays collection in the games database of mongodb
 var rDB = require('mongojs').connect('games',['replays']);
@@ -170,7 +170,7 @@ Room.prototype.startGame = function(){
       if(self.gameOn == false){
         clearInterval(gameInterval);
       }
-    }, 50);
+    }, 100);
 }
 /* Initializes the game state.
 
@@ -212,6 +212,7 @@ Room.prototype.sendScore = function(){
    console.log("Game " + this.name + " has ended.");
    io.sockets.in(this.name).emit('gameEnd');
    this.gameOn = false;
+
    this.emitReplay(); //emit cached information to database
  }
 }
@@ -309,9 +310,10 @@ Helper functions for the rooms to communicate with the database
 Shelby Lee
 */
 Room.prototype.cacheGameState = function(){
-  this.rDocs.push({gameID: this.rGameID, index: rIndex, playerPos: this.paddlePos,
-		   ballPos: this.ballPos, scores: this.scores});
-  rIndex = rIndex + 1; //increment the index
+  var paddles = [this.players[0].getPaddlePos(), this.players[1].getPaddlePos()];
+  this.rDocs.push({gameID: this.rGameID, index: this.rIndex, playerPos: paddles,
+		   ballPos: this.ballPos, scores: this.score});
+  this.rIndex = this.rIndex + 1; //increment the index
   
   /*this.rPlayerPos[0].push(this.paddlePos[0]);
   this.rPlayerPos[1].push(this.paddlePos[1]);
@@ -341,8 +343,8 @@ this.rGameID = greatest + 1;
 //Emitting current cached game information to database
 Room.prototype.emitReplay = function(){
   //Take everything from the array and put the javascript objects into db
-  for(int i = 0; i < this.rDocs.length; i++){
-    db.replays.save(rDocs[i]);    
+  for(var i = 0; i < this.rDocs.length; i++){
+    rDB.replays.save(this.rDocs[i]);    
   }
 
   /*db.replays.save({gameID: this.rGameID, playersPos : this.rPlayerPos, ballPos : this.rBallPos});*/
