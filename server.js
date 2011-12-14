@@ -1,8 +1,11 @@
-/* server.js v.0.3 for vir-pong, inc */ /* daniel guilak -- daniel.guilak@gmail.com */
+/* server.js v.0.4 for vir-pong, inc */
+/* daniel guilak -- daniel.guilak@gmail.com */
 
 var PORT = 3000; //Require the express framework (which creates a server) 
-var app = require('express').createServer(), sys = require(process.binding('natives').util ? 'util' : 'sys') //and 
-//socket.io which provides websocket support.
+var app = require('express').createServer(), 
+          sys = require(process.binding('natives').util ? 'util' : 'sys') 
+
+//socket.io provides websocket support.
 sio = require('socket.io');
 
 //set the server to listen on port 
@@ -12,7 +15,7 @@ app.listen(PORT);
 var io = sio.listen(app); 
 io.set('log level', 1); // reduce logging
 
-//Using mongojs to connect to the replays collection in the games database of mongodb
+//Using mongojs to connect to the replays collection database 
 var rDB = require('mongojs').connect('games',['replays']);
 
 //For connecting to the user database -- db-mysql
@@ -20,118 +23,207 @@ var rDB = require('mongojs').connect('games',['replays']);
 //ubuntu package libmysqlclient16-dev will do it!
 var mysql = require('db-mysql');
 
-var gClients = [];
-var gRooms = new Array(); 
-var gRoomNames = [];
-var gNumRooms = 0; //Associative arrays are objects, objects don't have length.
+var gClients = [];	//The socket.io clients that are connected.
+var gRooms = []; 	//Array of global Room objects.
+var gRoomNames = [];	//Array of global Room names.
+var gNumRooms = 0; //Keeps track of number of rooms (AArrays don't have length).
 
-var NOEVENT = 0;
-var WALLBOUNCE = 1;
-var PADDLEBOUNCE = 2;
-var MAXSCORE = 5;
-var SCORE = 3;
+var MAXSCORE = 5;	//Play to this many points.
+var UPDATE_INTERVAL = 50; //Number of milliseconds to send updates.
 
-//  This gets called when someone connects to the server.
-//  The argument of the function is essentially a pointer to that particular client's socket. */ 
+/*
+*
+* Gets called whenever someone connects to the server.
+* 
+* @param eventName='connection', function(aClient)
+* aClient is the reference to the client's socket.io socket.
+*
+*/
 io.sockets.on('connection', function (aClient) {
   var newClient;
   var isAuthenticated = false;
 
   console.log("Client connecting.");
-
+  
+  /*
+  *
+  * On authentication request from client.
+  * 
+  * Authenticates using mySQL database and notifies client of access
+  * granted or denied.
+  * 
+  * @param eventName='auth', function(data)
+  * data.username should have username
+  * data.password should have password information. 
+  * 
+  * @emits 'authGranted' on successful authentication
+  * @emits 'authFailed' on unsucessful authentication.
+  *
+  */
   aClient.on('auth', function(data){
     console.log("Authenticating: " + data.username + " " + data.password);
     authenticate(data.username, data.password, function(authenticated){
       if(authenticated == true){
-        console.log("Authentication granted for " + data.username);
-        aClient.emit('authGranted'); 
+        aClient.emit('authGranted');
         isAuthenticated = true;
-        newClient = new Client(aClient, data.username); 
+        newClient = new Client(aClient, data.username); //Creates a new Client.
         gClients.push(newClient);
-        //Server needs to: emit a game list
-        for(r in gRooms){
-          console.log("Room: " + r);
-        }
+
+	//Sends out an updated room list to the client.
         aClient.emit('roomList', {rooms: gRoomNames, numRooms: gNumRooms});
 
       } else {
+	//if authentication fails:
         aClient.emit('authFailed');
         console.log("Authentication failed for " + data.username);
       }
     });
   });
-  
+
+  /*
+  *
+  * On joinRoom from client
+  * Adds client to a certain Room object, as well as connects them to
+  * their respective socket.io room for communication purposes.
+  * 
+  * @param eventName='joinRoom', function(aClient)
+  * @param aClient is the reference to the client's socket.io socket.
+  * data.name is the name of the room client wishes to join.
+  *
+  */
   aClient.on('joinRoom', function(data){
-    if(isAuthenticated){
+    if(isAuthenticated){  //As long as the client has logged in.
       aClient.join(data.name); //Joining socket.io 'room'
-      newClient.currentRoom = gRooms[data.name];
-      newClient.clientType = data.clientType;
-      gRooms[data.name].joinRoom(newClient);
+      newClient.currentRoom = gRooms[data.name]; //Changing current room
+      newClient.clientType = data.clientType; //Changing type
+      gRooms[data.name].joinRoom(newClient); //Joining room.
     }
   });
 
+  /*
+  *
+  * On createRoom from client
+  * Creates a new room with specified name, adds client to that Room.
+  * Also adds client to socket.io group.
+  * 
+  * @param eventName='createRoom', function(aClient)
+  * @param aClient is the reference to the client's socket.io socket.
+  * data.name is the requested name for the room.
+  * 
+  */
   aClient.on('createRoom', function(data){
     if(isAuthenticated){
-      var newRoom = new Room();
-      newRoom.setName(data.name);
+      //Creates the new room and sets its name
+      var newRoom = new Room(data.name);
+
+      //Automatically makes the client a player.
       newClient.clientType = 'player';
-      addRoom(newRoom, function(newRoom){
-        
-
-
-
-      });
+      
+      //Adds the client to the room
+      addRoom(newRoom);
       aClient.join(data.name);
       console.log("Room length now: " + gNumRooms);
       newRoom.joinRoom(newClient);
       newClient.currentRoom = newRoom;
       
       gRoomNames.push(newRoom.name);
-      console.log("New room: " + gRooms[newRoom.name].getName() + ".");
     }
   });
 
-  //on clientType, just change in client object.
-  aClient.on('clientType', function(data) {
+  /*
+  *
+  * On clientType from client.
+  * This is how the client specifies if they are spectating or playing.
+  * 
+  * @param eventName='clientType', function(aClient)
+  * @param aClient is the reference to the client's socket.io socket.
+  * aData.type the type of client requested ('player', 'spectator')
+  * 
+  */
+  aClient.on('clientType', function(aData) {
     if(isAuthenticated){
-      //Will need to be changed to account for only 2 players at a time.
-      newClient.clientType = data.type;
+      newClient.clientType = aData.type;
     }
   });
 
-  //When a client sends an updatePaddle event, record their new paddle position.
+  /*
+  *
+  * On paddleUpdate from client
+  * As the paddle information for each client is stored within their instance
+  * of Client, this function catches any paddle update information from a
+  * particular client and updates their position.
+  * 
+  * @param eventName='paddleUpdate', function(aClient)
+  * @param aClient is the reference to the client's socket.io socket.
+  * aData.pos is a number between 0 and 100 corresponding to what the vertical
+  * position of a certain paddle is.
+  */
   aClient.on('paddleUpdate', function(aData) {
     if(isAuthenticated){
       //update the value of particular paddle position.
-      newClient.setPaddlePos(aData.pos);
-      console.log(newClient.name + " pos:" + newClient.getPaddlePos());
+      newClient.paddlePos = aData.pos;
     }
   });
-  
+
+  /*
+  *
+  * On disconnect from client -- gets called when a client 
+  * disconnects.
+  * 
+  * @param eventName='disconnect', function(aClient)
+  * @param aClient is the reference to the client's socket.io socket.
+  * 
+  */
   aClient.on('disconnect', function(data){
-    //Call delete client?
+    //Deletes Client instance from client array
+    delete gClients[gClients.indexOf(newClient)];
+    delete newClient;
   });
 
 });
 
-function addRoom(newRoom, callback) {
-  gRooms[newRoom.getName()] = newRoom;
+/*
+*
+* Helper function for adding a room to the global room
+* lists.
+* 
+* @param newRoom the room to add to the lists.
+*/
+function addRoom(newRoom) {
+  gRooms[newRoom.name] = newRoom;
   gNumRooms = gNumRooms + 1;
-  callback();
 }
 
+/*
+*
+* Provides functionality for deleting a room after a game ends.
+* 
+* @param r the room instance to remove from the server 
+*
+*/
 function deleteRoom(r){
   delete gRoomNames[gRoomNames.indexOf(r.name)];
   console.log(gRoomNames);
   console.log("Removing " + r.name);
   delete gRooms[r.name];
   gNumRooms = gNumRooms - 1;
+
+  //Emit an updated room list to everyone.
   io.sockets.emit('roomList', {rooms: gRoomNames, numRooms: gNumRooms});
-  //delete elements from arrays
 }
 
+/*
+*
+* Provides functionality for connecting to the WebUI team's
+* mySQL database for authenticating users.
+* 
+* @param user username
+* @param pass password
+* @param callback(true) if authenticated, callback(false) if not.
+*
+*/
+
 function authenticate(user, pass, callback){
-  var authenticated = false;
   //SQL Database information -- from Web team.
   new mysql.Database({
       hostname: 'localhost',
@@ -139,22 +231,22 @@ function authenticate(user, pass, callback){
       password: 'sawinrocks',
       database: 'db2'
   }).connect(function(error) {
-      console.log("Connecting to database for authentication!");
       if (error) {
         console.log('CONNECTION error: ' + error);
-        authenticated = false;
       }
-      console.log("Querying");
-      console.log('SELECT * FROM Customer WHERE username = \'' + user + '\' AND (password = \'' + pass + '\' OR pin = \'' + pass + '\')');
+
+      //Query provided by WebUI team.
       this.query('SELECT * FROM Customer WHERE username = \'' + user + '\' AND (password = \'' + pass + '\' OR pin = \'' + pass + '\')').
+      /*
+       * Internal method from db library.
+       */
       execute(function(error, rows, cols) {
         if (error) {
           console.log('ERROR: ' + error);
-          authenticated = false;
           callback(false);
         } else {
+	  //Authenticates successfuly if a row is returned.
           if(rows.length != 0){
-            console.log("Authenticated or something!");
             callback(true);
           } else {
             callback(false);
@@ -164,8 +256,16 @@ function authenticate(user, pass, callback){
   });
 }
 
-//Client object -- would make sense to have player and spectator inheirit at some point.
- 
+/*
+ * Client class provides a way to organize client information.
+ * 
+ * @field socket the socket.io reference to the client.
+ * @field name the client's username.
+ * @field clientType spectator, player, or null (in lobby).
+ * @field currentRoom pointer to the current room the player is occupying.
+ * @field paddlePos player's paddle position (if playing)
+ * @field playerNum player's paddle number (if playing) 
+ */
 function Client (socket, name) {
   this.socket = socket;
   this.name = name;
@@ -177,115 +277,136 @@ function Client (socket, name) {
 
 }
 
-Client.prototype.setPaddlePos = function(newPos) {
-  this.paddlePos = newPos;
-}
-
-Client.prototype.getPaddlePos = function() {
-  return this.paddlePos;
-}
-
+/**
+ * Sets a client's room to null, effectively leaving the room.
+ *
+ */
 Client.prototype.leaveRoom = function() {
   this.currentRoom = null;
 }
 
-//////////////////////////////////////////////
+/**
+ * Room class, provides a means for organizing each individal game, so that
+ * multiple games can be played at once! Sadly, the name acts as an ID, but
+ * it works, so whatever.
+ * 
+ * @param name the requested name for the room.
+ *
+ */
+function Room(name) {
+  this.name = name;
 
-
-//Game object! 
-function Room() {
-  this.name;
   /* Variable declarations */
-  this.pendingEvent = NOEVENT;
-  this.spectators = new Array();
-  this.players = new Array();
-  this.numPlayers = 0;
-  this.gameOn = false;	// Boolean whether or not the game is being played
-  this.paddlePos = []; // [player1, player2] height position.
-  this.ballPos = []; // [ballX, ballY] ball positions.
-  this.ballV = []; // [ballVX, ballVY] ball velocities.
-  this.ballR;	// The ball radius (currently not in implementation)
-  this.score = [];	// [scorePlayer1, scorePlayer2] player scores.
-  this.fieldSize = []; // [fieldX, fieldY] size of the game field.
-  this.paddleSize;// [paddleHeight, paddleWidth]
+  this.spectators = new Array();// Spectators
+  this.players = new Array();	// Players
+  this.numPlayers = 0;		// Number of players currently connected.
+  this.gameOn = false;		// Whether or not the game is being played
 
-  this.rGameID; //the gameID that will be queried on replays
-  this.rIndex = 0; //to track replay docs
-  this.rDocs = []; //an array of replay docs
+  /* Game-related variables */
+  this.ballPos = []; 		// [ballX, ballY] ball positions.
+  this.ballV = []; 		// [ballVX, ballVY] ball velocities.
+  this.ballR;			// The ball radius
+  this.score = [];		// [scorePlayer1, scorePlayer2] player scores.
+  this.fieldSize = []; 		// [fieldX, fieldY] size of the game field.
+  this.paddleSize;		// [paddleHeight, paddleWidth]
+
+  /* For mongoDB replay functionality */
+  this.rGameID; 		//the gameID that will be queried on replays
+  this.rIndex = 0; 		//to track replay docs
+  this.rDocs = []; 		//an array of replay docs
 }
 
+/**
+ * Preps the room for deletion by forcing all players to leave, and
+ * removing them from any related arrays.
+ *
+ */
 Room.prototype.prepForDeletion = function(){
   for(p in this.players){
     p.leaveRoom();
+
+    //leave from socket.io room.
     p.socket.leave("/"+this.name);
   }
   deleteRoom(this);
 }
 
-Room.prototype.getName = function(){
-  return this.name;
-}
-
-Room.prototype.setName = function(name){
-  this.name = name;
-}
-
+/**
+ * Function called to add player to room.
+ * 
+ * @param Client object to add.
+ *
+ */
 Room.prototype.joinRoom = function(aClient){
+  //Sets 'self' reference.
   var self = this;
+  //If the client is a player, give him a paddle ID (0=left, 1=right)
   if(aClient.clientType == 'player'){
-    console.log("players length: " + this.players.length);
-    //this.paddlePos[this.numPlayers] = client.paddlePos;
     aClient.socket.emit('paddleID', {paddleID: this.players.length});
     console.log("Player " + (this.players.length + 1) + " joined " + "(" + this.name + ")");
+    
+    //Add him to the players array.
     this.players.push(aClient);
   } 
+  
+  //If the client is a spectator, just put him on the spectators array.
   else if(client.clientType == 'spectator'){
     this.spectators.push(client);
   }
   
+  //If the room has two players, and the game hasn't been started,
   if(this.players.length == 2 && !this.gameOn){
-    this.initGame();
+    //Initialize the game, and start the game with a callback that
+    //sets it for deletion when the game has completed.
     this.startGame(this.prepForDeletion);
 
+  //If the game has already started and there are two players,
   } else if (this.players.length == 2 && this.gameOn){
+    //Give the client the gameInfo so that they can have the names of the players.
     aClient.emit('gameInfo', {names: [this.players[0].name, this.players[1].name]});
   }
 }
 
-/* This is the main game loop that is set to run every 50 ms. */ 
+/**
+  * The main game loop, uses setInterval to update ball logic and send out
+  * game state packets and update the mongo replay database.
+  * @param callback
+  *
+  */ 
 Room.prototype.startGame = function(cb){
+    //Sets self reference.
     var self = this;
+    
+    //Tells players who they're playing!
+    io.sockets.in(this.name).emit('gameInfo', {names: [this.players[0].name, this.players[1].name]});
+    
+    /* Initializing game state variables. */
+    this.ballPos = [50,50];
+    this.score = [0,0];
+    this.fieldSize = [100,100];
+    this.ballV = [1,2];
+    this.ballR = (1/20)*this.fieldSize[1];
+    this.paddleSize = [3,(1/5)*this.fieldSize[1]]; 
+    this.players[0].paddlePos = 50;
+    this.players[1].paddlePos = 50;
+
+    //Sets callback function.
     var callback = cb;
     self.gameOn = true;
     self.genGameID();  //generating gameID
+    
+    //The main game loop.
     var gameInterval = setInterval(function() {
       self.ballLogic(); //Run ball logic simulation.
       self.sendGameState(); //Send game state to all sockets.
-      //self.cacheGameState(); //caches game state to store into database.
+      
+      //When the game ends, clear the interval (essentially exiting the loop)
+      //and call the callback function. Runs at UPDATE_INTERVAL ms.
       if(self.gameOn == false){
         clearInterval(gameInterval);
         callback();
       }
-    }, 50);
-}
-/* Initializes the game state.
-
-In future revisions, magic numbers will be replaced with constants and parameters. */
-Room.prototype.initGame = function (){
-  io.sockets.in(this.name).emit('gameInfo', {names: [this.players[0].name, this.players[1].name]});
-  
-  console.log("Game initializing in " + this.name + "!");
-  this.ballPos = [50,50];
-  this.score = [0,0];
-  this.fieldSize = [100,100];
-  this.ballV = [1,2];
-  this.ballR = (1/20)*this.fieldSize[1];
-  //width, height
-
-  this.paddleSize = [3,(1/5)*this.fieldSize[1]]; 
-
-  this.players[0].setPaddlePos(50);
-  this.players[1].setPaddlePos(50);
+    }, UPDATE_INTERVAL);
 }
 
 /* Helper function to send the game state to all connected clients.
@@ -294,12 +415,11 @@ This will soon be phased out to support multiple game instances.
 
 Emits updateGame node event with paddle and ball position arrays. */
 Room.prototype.sendGameState = function(){
-  var paddles = [this.players[0].getPaddlePos(), this.players[1].getPaddlePos()];
-  io.sockets.in(this.name).volatile.emit('gameState', {paddle: paddles, ball: this.ballPos, gameEvent: this.pendingEvent});
+  var paddles = [this.players[0].paddlePos, this.players[1].paddlePos];
+  io.sockets.in(this.name).volatile.emit('gameState', {paddle: paddles, ball: this.ballPos});
   this.rDocs.push({index: this.rIndex, paddle: paddles,
 		   ball: [this.ballPos[0], this.ballPos[1]], scores: [this.score[0], this.score[1]]});
   this.rIndex = this.rIndex + 1; //increment the index
-this.pendingEvent = NOEVENT;
 }
 
 
@@ -360,47 +480,42 @@ Room.prototype.ballLogic = function(){
     
     if( this.ballPos[1] - this.ballR < 0 || this.ballPos[1] + this.ballR >this.fieldSize[1]){
       this.ballV[1] = -this.ballV[1]; //change gBallPos[1] direction if you go off screen in y direction ....
-      this.pendingEvent = WALLBOUNCE;
      }
     
     // Paddle Boundary Logic
     // Left paddle
     if(this.ballPos[0] == this.paddleSize[0] &&  //Left paddle's x
-       this.ballPos[1] >= this.players[0].getPaddlePos() && 
-       this.ballPos[1] <= (this.players[0].getPaddlePos() + this.paddleSize[1])) //Left paddle's y range
+       this.ballPos[1] >= this.players[0].paddlePos && 
+       this.ballPos[1] <= (this.players[0].paddlePos + this.paddleSize[1])) //Left paddle's y range
       { 
          console.log((this.fieldSize[0] - this.paddleSize[0]) + " paddlex: " + this.paddleSize[0]);
          this.ballV[0] = -this.ballV[0]; //changes x direction
-         this.pendingEvent = PADDLEBOUNCE;
       }
   
     else if(this.ballPos[0] < this.paddleSize[0] &&
             this.ballPos[0] > 0 &&           //X boundary of the edges
-           (this.ballPos[1] == this.players[0].getPaddlePos() || 
-            this.ballPos[1] == (this.players[0].getPaddlePos() + this.paddleSize[1])) //Y boundary of the edges
+           (this.ballPos[1] == this.players[0].paddlePos || 
+            this.ballPos[1] == (this.players[0].paddlePos() + this.paddleSize[1])) //Y boundary of the edges
            ){ //top and bottom of left paddle
   	    this.ballV[1] = -this.ballV[1]; //changes y direction
-  	    this.pendingEvent = PADDLEBOUNCE;
   	  }
     
   
     // Right paddle
   
     if(this.ballPos[0] == this.fieldSize[0] - this.paddleSize[0] && //Right paddle's x
-       this.ballPos[1] >= this.players[1].getPaddlePos() &&
-       this.ballPos[1] <= (this.players[1].getPaddlePos() + this.paddleSize[1])) //Right paddle's y range
+       this.ballPos[1] >= this.players[1].paddlePos &&
+       this.ballPos[1] <= (this.players[1].paddlePos + this.paddleSize[1])) //Right paddle's y range
       { 
          this.ballV[0] = -this.ballV[0]; // changes x direction
-         this.pendingEvent = PADDLEBOUNCE;
       }
   
     else if(this.ballPos[0] > this.fieldSize[0] - this.paddleSize[0] &&
             this.ballPos[0] < this.fieldSize[0] &&               //X boundary of the edges
-           (this.ballPos[1] == this.players[1].getPaddlePos() || 
-            this.ballPos[1] == (this.players[1].getPaddlePos() + this.paddleSize[1])) //Y boundary of the edges
+           (this.ballPos[1] == this.players[1].paddlePos || 
+            this.ballPos[1] == (this.players[1].paddlePos + this.paddleSize[1])) //Y boundary of the edges
            ){ //top and bottom of right paddle
   	    this.ballV[1] = -this.ballV[1]; // changes y direction
-  	    this.pendingEvent = PADDLEBOUNCE;
   	  }
     
     
@@ -445,7 +560,7 @@ Shelby Lee
 */
 //Caches game state into array on every emit to client
 Room.prototype.cacheGameState = function(){
-  var paddles = [this.players[0].getPaddlePos(), this.players[1].getPaddlePos()];
+  var paddles = [this.players[0].paddlePos, this.players[1].paddlePos];
   this.rDocs.push({index: this.rIndex, paddle: paddles,
 		   ball: this.ballPos, scores: this.score});
   this.rIndex = this.rIndex + 1; //increment the index
