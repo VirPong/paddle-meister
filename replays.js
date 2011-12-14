@@ -1,5 +1,15 @@
-/* Replays.js v.0.2 for Vir-Pong, Inc. */
-/* Shelby Lee */
+/*
+ * Replays.js for VirPong, Inc.
+ * 
+ * Replays.js allows clients to view VirPong games that have been saved to a mongodb
+ * repository. Games are currently selected via a game list emitted to the client consisting
+ * of gameIDs.
+ * 
+ * Version 0.2 is proof of concept.
+ * 
+ * @author Shelby Lee, Dan Guilak
+ * @version 0.2
+ */
 
 //listening on a port different than games
 var PORT = 3001;
@@ -14,34 +24,45 @@ io.set('log level', 1); // reduce logging
 var db = require('mongojs').connect('games',['replays']); //db connection
 
 var rGames = []; //Game list can be global
-/*
-  Client connects requesting a game based on its gameID. We send them an array of 
-  objects almost identical to the information sent during games so that they can build
-  replays easily.
-*/
 
+
+/*
+ *
+ * Gets called whenever someone connects to the server.
+ *
+ * @param eventName='connection', function(aClient)
+ * aClient is the reference to the client's socket.io socket.
+ *
+ */
 io.sockets.on('connection', function(aClient){
 
-  //var rDocs = []; //the javascript object pulled from the database
-  console.log("Client is connecting to replays.");
-
-  buildReplayList(aClient);
+  buildReplayList(aClient); //emit game list to client
   
-  //Requesting gameID to query on
+  /*
+   * On request to watch game from client
+   * 
+   * @param eventName='watchGame', function(aGameID)
+   * aGameID is a string of numbers unique to a saved game
+   *  
+   */
   aClient.on('watchGame', function(aGameID){
-    console.log("Game ID: " + aGameID.game);
-    console.log("Calling queryReplay");
     queryReplay(aClient, aGameID.game, function(aClient, rDocs){
-       console.log(rDocs);
-       watchGame(aClient, rDocs);
+       watchGame(aClient, rDocs);  //emit game to client
     });
-    //watchGame(aClient);
-    //aClient.volatile.emit('replayInfo', { replayInfo: rDocs});
   });
 
 });
 
-  //Watch from the array - streaming because stored information too large
+/*
+ * A helper function to be called to emit information to client
+ * Uses setInterval to stream game data packets 
+ *
+ * @param aClient is the reference to the client's socket.io socket
+ * @param rDocs is the array of information retrieved from repository
+ * 
+ * @emit 'replayInfo' after information retrieval
+ * @emit 'gameEnd' when replay is completed
+ */
 var watchGame = function(aClient, rDocs){
   i = 0;
   var replayInterval = setInterval( function() {
@@ -55,31 +76,45 @@ var watchGame = function(aClient, rDocs){
 }
   
 
-
+/**
+ * A helper function to query the database and build game information array
+ *
+ * @param aClient  is the reference to the client's socket.io socket.
+ * @param aGameID is a string of numbers unique to a saved game
+ * @param callback
+ *
+ */
 //Helper function to query database and build player position arrays
 function queryReplay(aClient, aGameID, callback){
   var rDocs = [];
-  console.log("In queryReplay " + aGameID);
-  //this query says we're looking for the games that have the same gameID as our argument
-  //we're going to leave our the mongodb generated index (_id) and the gameID
-  //Then we iterate over them to ensure that we don't accidentally pull something null
+  /* 
+    The query into mongo says we are looking for games with the same ID as our argument
+    {gameID: Number(aGameID)} This has to be cast as it was pulled from the database and
+    only an object
+    Then we will iterate over our results to ensure we don't accidentally pull something null   
+  */
   db.replays.find({gameID: Number(aGameID)}).forEach(function(err, doc) {
-    console.log("In forEach");
-    if(doc != null) {  //ensuring not null
-      console.log("In not null, replayDocs.length = " + doc.replayDocs.length);
+    if(doc != null) { 
       for(var i = 0; i < doc.replayDocs.length; i++){
-        console.log("In rdocs loop");
         rDocs[i] = doc.replayDocs[i];
-        console.log(rDocs[i].ball[0]);
       }
     }
   });
   callback(aClient, rDocs);
-  console.log(rDocs[0]);
 }
 
-//Helper function to build list of all repayable games
+/**
+ * Helper function to build most current list of repayable games
+ * 
+ * @param aClient is the reference to the client's socket.io socket.
+ *
+ * @emit 'games' An array of gameIDs
+ */
 function buildReplayList (aClient){
+  /*
+    This query says we want to find anything that has a gameID ({}, {gameID:1})
+    Then we iterate over to ensure not null     
+  */
   db.replays.find({}, {gameID:1}).forEach(function (err, doc) {
     if(doc != null){
       rGames.push(Number(doc.gameID));

@@ -618,6 +618,7 @@ Room.prototype.genGameID = function(){
   * Emits current cached game information to mongodb replay database.
   */
 Room.prototype.emitReplay = function(){
-  //Simply putting the array into the database
+  //Saves the game information as a Javascript object, will retain its shape
+  //However, these will simply become objects, must be casted on querying
   rDB.replays.save({gameID: this.rGameID, replayDocs: this.rDocs});
 }
