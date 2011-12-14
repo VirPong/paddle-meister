@@ -28,7 +28,7 @@ var gRooms = []; 	//Array of global Room objects.
 var gRoomNames = [];	//Array of global Room names.
 var gNumRooms = 0; //Keeps track of number of rooms (AArrays don't have length).
 
-var MAXSCORE = 5;	//Play to this many points.
+var MAXSCORE = 1;	//Play to this many points.
 var UPDATE_INTERVAL = 50; //Number of milliseconds to send updates.
 
 /*
@@ -92,7 +92,7 @@ io.sockets.on('connection', function (aClient) {
   *
   */
   aClient.on('joinRoom', function(data){
-    if(isAuthenticated){  //As long as the client has logged in.
+    if(isAuthenticated || data.name == null){  //As long as the client has logged in.
       aClient.join(data.name); //Joining socket.io 'room'
       newClient.currentRoom = gRooms[data.name]; //Changing current room
       newClient.clientType = data.clientType; //Changing type
@@ -198,14 +198,20 @@ function addRoom(newRoom) {
 *
 * Provides functionality for deleting a room after a game ends.
 * 
-* @param r the room instance to remove from the server 
+* @param r the room instance's name to remove from the server 
 *
 */
 function deleteRoom(r){
-  delete gRoomNames[gRoomNames.indexOf(r.name)];
+  console.log("Room is " + r);
+  var toBeDeleted = gRoomNames.indexOf(r);
+  console.log("To be deleted: " + toBeDeleted + " " + r);
+
+  delete gRoomNames[toBeDeleted];
   console.log(gRoomNames);
-  console.log("Removing " + r.name);
-  delete gRooms[r.name];
+  console.log(gRoomNames[0]);
+
+  console.log("Removing " + r);
+  delete gRooms[r];
   gNumRooms = gNumRooms - 1;
 
   //Emit an updated room list to everyone.
@@ -257,6 +263,40 @@ function authenticate(user, pass, callback){
 }
 
 /*
+ * Adds a finished game to the WebUI's mySQL database.
+ * 
+ * @param user1 Player 1's name
+ * @param user2 Player 2's name.
+ * @param score1 Player 1's score.
+ * @param score2 Player 2's score.
+ * @param winner Winner's name.
+ *
+ * Will log an error if it doesn't work.
+ */
+function addGameDataToSQLDB(user1, user2, score1, score2, winner){
+  new mysql.Database({
+    hostname: 'localhost',
+    user: 'root',
+    password: 'sawinrocks',
+    database: 'db2'
+  }).connect(function(error){
+    if (error) {
+      return console.log('CONNECTION error: ' + error);
+    }
+    this.query().insert('GamesPlayed', 
+            ['username1', 'username2', 'score1', 'score2', 'win'],
+            [user1, user2, score1, score2, winner]
+            ).execute(function(error, result) {
+              if (error) {
+                console.log('ERROR: ' + error);
+                  return;
+                }
+                console.log('GENERATED id: ' + result.id);
+             });
+           });
+}
+
+/*
  * Client class provides a way to organize client information.
  * 
  * @field socket the socket.io reference to the client.
@@ -295,7 +335,7 @@ Client.prototype.leaveRoom = function() {
  */
 function Room(name) {
   this.name = name;
-
+  console.log("this.name is " + this.name);
   /* Variable declarations */
   this.spectators = new Array();// Spectators
   this.players = new Array();	// Players
@@ -321,14 +361,15 @@ function Room(name) {
  * removing them from any related arrays.
  *
  */
-Room.prototype.prepForDeletion = function(){
-  for(p in this.players){
-    p.leaveRoom();
-
-    //leave from socket.io room.
-    p.socket.leave("/"+this.name);
-  }
-  deleteRoom(this);
+Room.prototype.prepForDeletion = function(name, players){
+//  for(p in players){
+//    p.leaveRoom();
+//
+//    //leave from socket.io room.
+//    p.socket.leave("/"+name);
+//  }
+  console.log("trying to delete " + name);
+  deleteRoom(name);
 }
 
 /**
@@ -404,32 +445,47 @@ Room.prototype.startGame = function(cb){
       //and call the callback function. Runs at UPDATE_INTERVAL ms.
       if(self.gameOn == false){
         clearInterval(gameInterval);
-        callback();
+        callback(self.name, self.players);
       }
     }, UPDATE_INTERVAL);
 }
 
-/* Helper function to send the game state to all connected clients.
-
-This will soon be phased out to support multiple game instances.
-
-Emits updateGame node event with paddle and ball position arrays. */
+/**
+ * Sends the Room's current updated game state to all pertinent connected
+ * clients (players and spectators).
+ * 
+ * Also adds information to array on its way to mongoDB replay database.
+ * 
+ */
 Room.prototype.sendGameState = function(){
+  //Temporary array to simplify code.
   var paddles = [this.players[0].paddlePos, this.players[1].paddlePos];
+
+  //For every client connected and present in the room, emit a volatile (no ACK required)
+  //event with the paddle position data and the ball position data.
   io.sockets.in(this.name).volatile.emit('gameState', {paddle: paddles, ball: this.ballPos});
+  
+  //Add the index, paddle position data, ball position data, and socre data to the mongo array, and
+  //increment the index.
   this.rDocs.push({index: this.rIndex, paddle: paddles,
 		   ball: [this.ballPos[0], this.ballPos[1]], scores: [this.score[0], this.score[1]]});
   this.rIndex = this.rIndex + 1; //increment the index
 }
 
 
-/* Sends an scoreUpdate event to all connected clients (will be phased out soon for a more modular approach */ 
+/**
+  * Sends the room's current score to whoever is present in the room,
+  * whether it be players or spectators. Also deals with end-game scenario.
+  *
+  */
 Room.prototype.sendScore = function(){
- //Still sending to everyone.
+ //Set a self reference.
  var self = this;
 
- console.log("(" + this.name + "): " + this.score[0] + " to " + this.score[1]);
+ //Emit a scoreUpdate event to all connected clients with new score.
  io.sockets.in(this.name).emit('scoreUpdate', { score: this.score });
+ 
+ //If the game is over, set a temporary "winner" variable.
  if(this.score[0] == MAXSCORE || this.score[1] == MAXSCORE){
    var winner;
    if(this.score[0] == MAXSCORE){
@@ -439,70 +495,57 @@ Room.prototype.sendScore = function(){
      winner = this.players[1].name;
    }
 
+   //Send a gameEnd event to everyone.
    console.log("Game " + this.name + " has ended.");
    io.sockets.in(this.name).emit('gameEnd');
    
-   ///////////////////////////////////////////////////////////////////
-   new mysql.Database({
-      hostname: 'localhost',
-      user: 'root',
-      password: 'sawinrocks',
-      database: 'db2'
-   }).connect(function(error){
-    if (error) {
-        return console.log('CONNECTION error: ' + error);
-    }
-    this.query().
-        insert('GamesPlayed', 
-            ['username1', 'username2', 'score1', 'score2', 'win'], 
-            [self.players[0].name, self.players[1].name, self.score[0], self.score[1], winner]
-        ).
-        execute(function(error, result) {
-                if (error) {
-                        console.log('ERROR: ' + error);
-                        return;
-                }
-                console.log('GENERATED id: ' + result.id);
-        });
-    });
+   //End the game! 
    this.gameOn = false;
 
-   this.emitReplay(); //emit cached information to database
- }
+   //Add the game to the WebUI team's SQL DB for data processing.
+   addGameDataToSQLDB(this.players[0].name, this.players[1].name, this.score[0],
+		  this.score[1], winner);
+
+   //Put cached information into mongo database for replays.
+   this.emitReplay(); 
+  }
 }
 
 /*
- This ball logic code originated from David Eva, slightly modified for use on the server. Needs tweaking. */
-
+ * This is the function that calculates the differential in the game state,
+ * and it is called once every INTERVAL as determined by the startGame method.
+ *
+ */
 Room.prototype.ballLogic = function(){
 
-    //Ball bouncing logic
-    
-    if( this.ballPos[1] - this.ballR < 0 || this.ballPos[1] + this.ballR >this.fieldSize[1]){
-      this.ballV[1] = -this.ballV[1]; //change gBallPos[1] direction if you go off screen in y direction ....
+    /* Ball bouncing logic */
+    if(this.ballPos[1] - this.ballR < 0 || 
+       this.ballPos[1] + this.ballR > this.fieldSize[1]){
+
+	 //change gBallPos[1] direction if you go off screen in y direction ....
+         this.ballV[1] = -this.ballV[1]; 
      }
     
-    // Paddle Boundary Logic
-    // Left paddle
-    if(this.ballPos[0] == this.paddleSize[0] &&  //Left paddle's x
+    /* Paddle Boundary Logic */
+    /* Left paddle */
+    if(this.ballPos[0] == this.paddleSize[0] &&  	
+       //Left paddle's x
        this.ballPos[1] >= this.players[0].paddlePos && 
        this.ballPos[1] <= (this.players[0].paddlePos + this.paddleSize[1])) //Left paddle's y range
-      { 
-         console.log((this.fieldSize[0] - this.paddleSize[0]) + " paddlex: " + this.paddleSize[0]);
+       { 
          this.ballV[0] = -this.ballV[0]; //changes x direction
-      }
+       }
   
-    else if(this.ballPos[0] < this.paddleSize[0] &&
-            this.ballPos[0] > 0 &&           //X boundary of the edges
-           (this.ballPos[1] == this.players[0].paddlePos || 
-            this.ballPos[1] == (this.players[0].paddlePos() + this.paddleSize[1])) //Y boundary of the edges
-           ){ //top and bottom of left paddle
-  	    this.ballV[1] = -this.ballV[1]; //changes y direction
-  	  }
+     else if(this.ballPos[0] < this.paddleSize[0] &&
+       this.ballPos[0] > 0 &&           //X boundary of the edges
+       (this.ballPos[1] == this.players[0].paddlePos || 
+	//Y boundary
+        this.ballPos[1] == (this.players[0].paddlePos + this.paddleSize[1]))){ //top and bottom of left paddle
+          this.ballV[1] = -this.ballV[1]; //changes y direction
+       }
     
   
-    // Right paddle
-  
+    /* Right paddle */
     if(this.ballPos[0] == this.fieldSize[0] - this.paddleSize[0] && //Right paddle's x
        this.ballPos[1] >= this.players[1].paddlePos &&
        this.ballPos[1] <= (this.players[1].paddlePos + this.paddleSize[1])) //Right paddle's y range
@@ -515,15 +558,17 @@ Room.prototype.ballLogic = function(){
            (this.ballPos[1] == this.players[1].paddlePos || 
             this.ballPos[1] == (this.players[1].paddlePos + this.paddleSize[1])) //Y boundary of the edges
            ){ //top and bottom of right paddle
-  	    this.ballV[1] = -this.ballV[1]; // changes y direction
-  	  }
+  	      this.ballV[1] = -this.ballV[1]; // changes y direction
+  	    }
     
     
     // if ball goes out of frame reset in the middle and put to default speed and increment gScore...
-    
-    if(this.ballPos[0] + this.ballR < 0){ //changed these numbers you had old ones so ball was going super far out of frame
+    if(this.ballPos[0] + this.ballR < 0){
+      //changed these numbers -- ball was going super far out of frame 
       this.ballPos[0] = this.fieldSize[0]/2;
-      this.ballPos[1] = Math.floor(Math.random()*(this.fieldSize[1]-2))+1; //Randomize starting y pos(1 to fieldsize -1 to account for boundry issues)
+
+      //Randomize starting y position to account for boundary issues
+      this.ballPos[1] = Math.floor(Math.random()*(this.fieldSize[1]-2))+1; 
       this.ballV[0] = -1;  // Changes the direction of the ball if Player 2 scored
       var dir = Math.floor(Math.random()*2);// random direction variable(1 or 0)  
       if(dir == 0){
@@ -535,11 +580,12 @@ Room.prototype.ballLogic = function(){
       this.score[1] = this.score[1] + 1;
       this.sendScore();
     }
-    if(this.ballPos[0] + this.ballR > this.fieldSize[0] + 10){ //changed these numbers you had old ones so ball was going super far out of frame
+    if(this.ballPos[0] + this.ballR > this.fieldSize[0] + 10){
       this.ballPos[0] = this.fieldSize[0]/2;
-      this.ballPos[1] = Math.floor(Math.random()*(this.fieldSize[1]-2))+1; //Randomize starting y pos(1 to fieldsize -1 to account for boundry issues)
+      this.ballPos[1] = Math.floor(Math.random()*(this.fieldSize[1]-2))+1; 
       this.ballV[0] = 1;
-      var dir = Math.floor(Math.random()*2);// random direction variable(1 or 0)       
+      //random direction variable(1 or 0)       
+      var dir = Math.floor(Math.random()*2);
       if(dir == 0){
       	dir = -2;//ball direction is up
       }else{
@@ -547,26 +593,20 @@ Room.prototype.ballLogic = function(){
       }
       this.ballV[1] = dir;
       this.score[0] = this.score[0] + 1;
+      
+      //Sends score.
       this.sendScore();
     }
     
+    //Updates ball position based on velocity.
     this.ballPos[0]+=this.ballV[0];
     this.ballPos[1]+=this.ballV[1];
 }
 
-/*
-Helper functions for the rooms to communicate with the database
-Shelby Lee
-*/
-//Caches game state into array on every emit to client
-Room.prototype.cacheGameState = function(){
-  var paddles = [this.players[0].paddlePos, this.players[1].paddlePos];
-  this.rDocs.push({index: this.rIndex, paddle: paddles,
-		   ball: this.ballPos, scores: this.score});
-  this.rIndex = this.rIndex + 1; //increment the index
-}
 
-//Generating unique gameID
+/*
+ * Generates game ID based on UTC
+ */
 Room.prototype.genGameID = function(){
   //Temporarily using unix time for gameID - highly unlikely to have duplicates
   var foo = new Date;
@@ -574,7 +614,9 @@ Room.prototype.genGameID = function(){
   this.rGameID = unixtime;
 }
 
-//Emitting current cached game information to database
+/**
+  * Emits current cached game information to mongodb replay database.
+  */
 Room.prototype.emitReplay = function(){
   //Simply putting the array into the database
   rDB.replays.save({gameID: this.rGameID, replayDocs: this.rDocs});
