@@ -236,9 +236,8 @@ function deleteRoom(room){
 *
 * Provides functionality for connecting to the WebUI team's
 * mySQL database for authenticating users.
-* 
-* This code was developed in joint with the WebUI team.
-* There is some duplicate code here, but it is minimal and it works.
+*
+* THIS CODE IS MAINTAINED BY THE WEBUI TEAM!
 *
 * @param user username
 * @param pass password
@@ -280,7 +279,9 @@ function authenticate(user, pass, callback){
 }
 
 /*
- * Adds a finished game to the WebUI's mySQL database.
+ ** Adds a finished game to the WebUI's mySQL database.
+ *  THIS CODE IS MAINTAINED BY THE WEBUI TEAM!
+ *
  * 
  * @param user1 Player 1's name
  * @param user2 Player 2's name.
