@@ -9,8 +9,8 @@
                        vmarginratio={1:1}
 }
 \begin{document}
-\title{Intermediate Report -- Server Group}
-\author{Ryan Wheeler, Shelby Lee, Patrick Green, Daniel Guilak}
+\title{Final Report -- Server Team}
+\author{Patrick Green, Daniel Guilak, Shelby Lee, Ryan Wheeler}
 \date{\today}
 \maketitle
 \newpage
@@ -18,24 +18,26 @@
 \tableofcontents
 
 \section{Our Product}
-The Server Team branch of the Vir-Pong project handles the communication between devices during a pong game, as well as the game logic. The server will function as the hub of communication for devices playing Vir-Pong, and will also maintain a database explicitly for the purpose of replaying games.
+The Server Team branch of the VirPong project handles the communication between devices during a pong game as well as the the game logic, it will also save games for replay purposes. The server functions as the hub of communication for devices playing VirPong.
 
-In the near future, devices will consist of modern browsers, Android platform phones, or Apple products running iOS with room for expansion on to other platforms as they become feasible. The server will determine the game logic -- such as ball movement and score -- as well as relay data such as paddle positions from each client. The system will also be able to facilitate live streaming of games to and from any client. The server will also provide an API for the WebUI team to access stored game replay files as well as other pertinent information such as user names and IDs. Also included will be detailed documentation on tools, references, and installation instructions.
+
+Devices the game can play on consist of modern browsers, Android platform phones, or Apple products running iOS with room for expansion on to other platforms as they become feasible. The server determines the game logic -- such as ball movement and score --  and relays this data and paddle positions to and from each client. The system will also be able to facilitate live streaming of games to all clients connected to games. Multiple games can be played at one time via game rooms and can have multiple spectators. Multiple replays can be viewed at once. 
+
+This report will explain our product in greater technical detail and include documentation of tools, references, and installation instructions. 
 
 \section{Functional Requirements}
 
 \subsection{Use Cases}
 
 \noindent \textbf{Scenario Title:} Any client connecting to system.\\
-\textbf{Version:} 1.0\\
+\textbf{Version:} 2.0\\
 \textbf{Actors:} Client, network\\
 \textbf{Pre-conditions:} Client has access to network, system is connected to network and accepting connections.\\
 \textbf{Post-conditions:} Client is connected to system and ready to start a new game or join an existing one.\\
 \textbf{Scenario:}
 \begin{enumerate}
-   \item Client requests connection with system.
-   \item System accepts connection, assigns client a client ID.
-   \item System sends client its ID and ready signal.
+   \item Client requests connection with system with intent to play games.
+   \item System accepts connection.
    \item System sends client information about current available games.
 \end{enumerate}
 \textbf{Alternatives:}\\
@@ -87,6 +89,12 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \item System informs client that request to join was denied
 \end{enumerate}
 \emph{Return to 1}\\
+\textbf{2b.} Game is already being played
+\begin{enumerate}
+\item Client 2 cannot play game
+\item System makes Client 2 a spectator
+\end{enumerate}
+\emph{Return to 5}\\
 \textbf{4.} The game starts.\\
 \textbf{4a.} A client disconnects from the system
 \begin{enumerate}
@@ -99,8 +107,8 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \item System informs disconnected client of game end
 \end{enumerate}
 \emph{Return to 1}\\
-\textbf{5.} The game is started.
-\textbf{5a.} A client disconnects from the system
+\textbf{5.} The game is started. \\
+\textbf{5a.} A client disconnects from the system \\
 \begin{enumerate}
 \item System freezes game state
 \item System informs connected client of opponent disconnect
@@ -111,38 +119,29 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \item System informs disconnected client of game end
 \end{enumerate}
 \emph{Return to 1}\\
-\textbf{6.} The game is started.
-\textbf{6a.} A data package is dropped by the system
-\begin{enumerate}
-\item System freezes game state
-\item System attempts to resend the package to both Clients
-\item Borh players recieve data package
-\item Game state is restored and game continues
-\end{enumerate}
 
-\noindent \textbf{Scenario Title:} Store player position in repository.\\
-\textbf{Version:} 1.0\\
-\textbf{Actors:} Client, system, repository, position tracker\\
-\textbf{Pre-conditions:} System operational, client participating in game\\
+
+\noindent \textbf{Scenario Title:} Store game state in repository.\\
+\textbf{Version:} 2.0\\
+\textbf{Actors:} Client, repository, cache\\
+\textbf{Pre-conditions:} System operational, client participating in game, database connection\\
 \textbf{Post-conditions:} Game ends.\\
 \textbf{Scenario:}
 \begin{enumerate}
-\item Client moves, position tracker sends data to system.
-\item System communicates updated position to repository.
-\item Repository logs position of client and adds time stamp.
-\item Continues until an end game state is reached or client ends game.
-\item System reports end of game to repository.
-\item Repository logs end of game with time stamp.
+\item System emits game state to clients
+\item Cache temporarily stores the game state \\
+\emph{Repeat until game ends}
+\item On game end system saves game states to repository
 \end{enumerate}
 \textbf{Alternatives:}\\
-\textbf{1.} Client moves, position tracker sends data to system.
-\textbf{1a.} Client is unable to send data to the system
+\textbf{3.} On game end system saves game states to repository \\
+\textbf{3a.} Repository is down
 \begin {enumerate}
-\item System pauses game state
-\item Client retries sending the data
-\item System recieves the data
-\item Game state resumes
+\item System unable to send data to repository
+\item System informs client unable to save
+\item System continues with game end procedures without saving data
 \end {enumerate}
+
 
 \noindent \textbf{Scenario Title:} Update player scores.\\
 \textbf{Version:}1.0\\
@@ -163,39 +162,42 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \item Client interface displays current score
 \end{enumerate}
 \textbf{Alternatives}\\
-\textbf{4.} Game logic determines no collision. 
+\textbf{4.} Game logic determines no collision.  \\
 \textbf{4a.} Game logic deterines a collision
 \begin {enumerate}
 \item The ball changes direction and a client moves to hit it
 \emph {Repeat until no collsion is detected}
 \end {enumerate}
-\textbf{6.} Game repository increments client1’s point.
+\textbf{6.} Game repository increments client1’s point. \\
 \textbf{6a.} The Repository is down or unable to update player score
 \begin{enumerate}
 \item System continues the game wthout storing score for replay
 \end{enumerate}
 
 \noindent \textbf{Scenario Title:} Accessing a replay from the repository.\\
-\textbf{Version:} 1.0\\
-\textbf{Actors:} Game Logic, Game repository, Interface\\
+\textbf{Version:} 2.0\\
+\textbf{Actors:} Game repository, interface, client\\
 \textbf{Pre-conditions:} System operational.\\
 \textbf{Post-conditions:} User interface shows a replay.\\
 \textbf{Scenario:}
 \begin{enumerate}
-\item User chooses a game to watch.
-\item Game repository selects requested game.
-\item Position information from game repository sent to interface.
-\item Position information is iterated over based on time stamp.
-\item Game logic rebuilds ball positions based from recorded positions.
-\item System sends data to user interface to be viewed.
+\item Client connects to system
+\item System provides client with current list of saved games
+\item Client selects a game
+\item Game repository selects requested game 
+\item Save game's game state is cached
+\item Cached game state information sent to client
+\item Interface rebuilds game based on game state
 \end{enumerate}
 \textbf{Alternatives}\\
-\textbf{2.} Game repository
-\textbf{2a.} Requested game cannot be watched
-\begin{enumerate}
-\item Game repository informs user of error
-\item User selects another game to view
-\end {enumerate}
+\textbf{4.} Game does not exist \\
+\textbf{4a.} Requested game cannot be fetched from repository
+\begin {enumerate}
+\item Game repository reports error
+\item System informs client of issue
+\item User selects another game to view \\
+\emph {Return to 4}
+\end{enumerate}
 
 \noindent \textbf{Scenario Title:} Two clients with simple reactions are playing a game until a winner is determined. \\
 \textbf{Version:}2.0\\
@@ -227,21 +229,6 @@ In the near future, devices will consist of modern browsers, Android platform ph
 \emph{Return to 5}\\
 
 
-\noindent \textbf{Scenario Title:} Client plays against an artificially generated opponent.\\
-\textbf{Version:}1.0\\
-\textbf{Actors:} Client, game logic\\
-\textbf{Pre-conditions:} Client has access to the network and is connected to the system\\
-\textbf{Post-conditions:} Client is playing a game with artificial opponent\\
-\textbf{Scenario:}
-\begin{enumerate}
-\item Client asks for offline game
-\item System informs game logic of offline game
-\item Client chooses opponent difficulty
-\item Game logic generates artificial player's movement patterns
-\item System prompts game start
-\end{enumerate}
-
-
 %Will probably have lots of \newpage commands here.
 \subsection{System Sequence Diagram}
 Our highest priority use case was that of any client connected to the system. We have illustrated it in the following System Sequence Diagram. The diagram shows the client requesting a connection with the system, the system accepting that connection. The system proceeds to create a clientID to identifiy the client. The system then sends the clientID to the client along with a ready signal. The system then reports avaliable games to the client. 
@@ -259,7 +246,7 @@ These secondary features will bring out the performance and ability of our serve
 
 \section{Domain Analysis}
 The domain of our problem consists largely of a client, game, and a lobby. We want the lobby, our conceptualization of a server, to connect clients to games.\\
-\begin{center}\includegraphics{DomAnaUML.pdf} \end{center} 
+\begin{center}\includegraphics{DomAnaUML.eps} \end{center} 
 A client is recognized mainly by the device used in connecting with the lobby. This device is assigned a clientID by the lobby in order to track user interactions with the system. At any one point in time, a client can be either a player or an observer. A client can easily switch between these definitions, but will always retain their clientID while connected. Such is why we have made player and spectators conceptual classes of the generic class client. A theoretically infinite amount of spectators can observe a game, but only two players can play one game. The lobby that connects players and observers to games can host a theoretically infinite amount of games at any one given moment, but all games are tagged back to one lobby. Each game is associated with a single game state. This game state holds the positions of the paddles and the ball. The game state only exists during an instance of the game and, quite essentially, holds the state of a game. Our definition of a game state is the position of paddles and the ball. This game state builds a replay. Any number of spectators can watch any number of these replays. 
 
 \section{Interaction Diagram}
@@ -303,12 +290,8 @@ function toOpenWindow(aWindow) {
 Spaces are not necessary inside brackets e.g. parameter lists, array subscripts.
 Prefer double quotes, except in in-line event handlers or when quoting with double quotes ie (‘he said, “trouble” ’).
 Have braces indented relative to their parent statement.
-\subsubsection{Code Style}
-Always put the else of an if-else statement on its own line.
-Both i++ and ++i should not be used.
 \subsubsection{Function and Varible Naming}
 \begin{itemize}
-\item Global variables should be prefixed with the letter g, e.g. var gFormatToolbar;
 \item Arguments (parameter names) should be prefixed with the letter a.
 \item Event handler functions should be prefixed with the word "on".
 \item Function names, local variables and object members have no prefix.
@@ -389,29 +372,39 @@ node server.js
 The server will run at whichever port specified in the PORT variable in server.js. To shutdown the server, press CTRL-C twice.
 
 \subsubsection{MongoDB and Modules}
-First go to mongodb.org and find the path to the most recent 64-bit Linux version. Then put this onto the server using shell commands:
+First we went to mongodb.org and found the path to the most recent 64-bit Linux download. We then put this onto the server using terminal commands: wget [web path]. We then uncompressed the file using the command tar zxvf [file name].tgz.
 
-\begin{verbatim}
-wget [path copied from web]
-\end{verbatim}
-Then uncompress the file using tar with
-
-\begin{verbatim}
-tar zxvf [file name].tgz
+\begin{verbatim}  
+  $wget http://fastdl.mongodb.org/linux/mongodb-linux-x86_64-2.0.1.tgz
+  $tar zxvf mongodb-linux-x86_64-2.0.1.tgz
 \end{verbatim}
 
-Then install MongoDB using the synaptic package manager (Debian-based Linux distributions only):
-\begin{verbatim}
-sudo apt-get install mongodb
+We then installed mongodb using: 
+
+ \begin{verbatim}
+  $sudo apt-get install mongodb
 \end{verbatim}
 
-After looking over this open-source module, we determined that node-mongodb-native was perfectly suited for our project. This module facilitates a connection between mongodb and our server, which uses node. However, we ran into a compilation error when attempting to run example code, complaining of the native bson parser not being compiled.
-In searching for a solution, we were pointed to another module for mongodb, called mongojs. Mongojs is actually a wrapper for mongodb-native that allows code to be written in a format almost identical to the mongodb shell API. This allows the code to be condense and clear.
-We retrieved node-mongodb-native from github and mongojs was installed via npm with the shell command:
+After looking over this open-source module, we determined that node-mongodb-native ( https://github.com/christkv/node-mongodb-native )was perfectly suited for our concerns. This module facilitates a connection between mongodb and our server, which uses node. We copied the repository from github using:
 
-\begin{verbatim}
-npm install mongojs
+\begin {verbatim}
+  $git clone git://github.com/christkv/node-mongodb-native.git
 \end{verbatim}
+
+However, we ran into a compilation error when attempting to run example code, complaining of the native bson parser not being compiled.
+In searching for a solution, we were found another module for mongodb, called mongojs ( https://github.com/gett/mongojs ).Mongojs is actually a wrapper for mongodb-native that allows code to be written in a format almost identical to the mongodb shell API. This allows the code to be condense and clear.
+We retrieved node-mongodb-native from github and mongojs was installed via npm with the terminal command:
+
+\begin {verbatim}
+  $npm install mongojs
+\end{verbatim}
+
+Mongojs allows for very simple, one line connection to the database. Connection in Javascript is as follows: 
+\begin {verbatim}
+  var db = require('mongojs').connect('database', ['collection']); 
+\end{verbatim}
+Replace 'database' with the database name you wish to use and 'collection' with the collection name you wish to use. They do not need to exist when you connect. 
+
 
 \subsection{Algorithms, Data Structures, and Design Patterns}
 \subsubsection{Design Pattern}
@@ -419,52 +412,33 @@ The node.js server framework is event-driven, so naturally design has been focus
 For example, there are connect, disconnect, updatePaddle, startGame, and other such events that are implemented both server- and client-side.
 
 \subsection{Data Storage}
-The data we are storing is specific to games and the players of each. This data is limited to usernames, player positions, gameIDs, and scores. This information will be stored in the noSQL database, mongodb. We choose to use mongodb because it is not only better for real-time, online, multi-player applications, but it has a loose schema that allows us to change the size and information of each document as we will.
-
-This information will be placed in one collection replays. The replays collection in our database will hold game positions and collision data so that we can reverse engineer games as ‘replays’ by pulling out the position data of players and applying current game logic. \\
+The data we’re storing is specific to games and the players. We have limited ourselves to usernames, paddle positions, ball positions, scores, and gameIDs. This information will be stored in a noSQL database, mongodb. We have chosen to use a non-relational database because it is not only better for real-time, online, multi-player application, but it has a schema that allows us to directly store and remove Javascript objects without losing any of their structure. 
+The main purpose of this data storage is to store information for replays. The replays collection in our database will hold Javascript objects almost identical to those emitted to client during the game. This allows the client a modular way to recreate the game as a replay.
+The secondary purpose of this data storage is to cache information that the website will use to interact with their own data. In the gameData collection, we will store usernames, scores, and gameIDs. This information will be transferred to the website’s SQL database.  \\
 
 %The E/R Diagram
-\includegraphics{ERdia.pdf} \\
+\begin{center}\includegraphics{ERdia.eps} \end{center} 
 
+This diagram is loosely modeled off of an E/R diagram, as a non-relational database typically does not follow relational diagrams. There are two main classes (player and game), and an association complete with a class between them (position). Player is a repository of information that we will communicate with regarding user identity and later update with score information. This information is cached in current game states during a game and will be accessed there. There can be as little as no players a game up to two, with position tracking both the players and the ball. The game section of the document will hold the gameID for tracking and retrieving purposes. The game will also keep track of scores when they are initialized and whenever they are updated. 
 
-This diagram is loosely modeled off of an E/R diagram. There are two main classes (player and game), and an association complete with a class between them (position). Player is a repository of information that we will communicate with regarding user identity and later update with score information. Our data’s interactions with player class will be minimal but essential for some of the web user interface secondary features, which including information tracking. There can be as little as no players a game up to two, and the position is only important for non-computer players. The game section of the document will hold the gameID and a boolean status of whether or not the game is current, these pieces of information will be added to every game played to ensure better tracking. The boolean ‘current’ will be set from true to false on all documents composing the game when the game ends. The game will also keep track of scores when they are initialized and whenever they are updated.
-
-The position section of the BSON document will experience the most variability, and thus it is attributed as an association class to the plays association. The position is marked most notably by the coordinates of the current player; these coordinates update upon communication with the server. On updating, there will be a time stamp with an imposed index on it. Collision is a String to help during reconstruction that will denote whether or not the movement caused a collision or the ball simply scored, these will be stored as ‘T’ for collision, ‘F’ for no ball interaction, and ‘M’ for if the ball is missed.
-
-The general form of the BSON documents will look something like this:
-\begin{verbatim}
-var fullDoc = {gameID : Stringnums,
-                p1: username, 
-                p2: username, 
-                p1pos: nums, 
-                p2pos: nums, 
-                p1score: 0, 
-                p2score: 0, 
-                collision: String (T/F/M), 
-                time: times, 
-                current: true
-                };
+BSON documents are the names for the object the database stores. The BSON documents we will be storing are Javascript objects. Initially, we believed that the documents would vary depending on what exactly was occurring during the time of play. However, it soon became apparent that providing the client’s objects almost identical to those the server emits during playtime. We cache these into an array and save this array along with the gameID. A document then looks a bit like this: 
+\begin {verbatim}
+var replays = { gameID : DATE, replayDocs : [game states] }
 \end{verbatim}
-We expect input to look something like this, since we already have the player usernames stored in another document created at the beginning of the game (easily accessible by querying on gameID and searching only for the documents with the ‘p1’ attribute)
+The replayDocs is the array of cached game states, and this array looks like this:
 \begin{verbatim}
-var p1Move =  {gameID: Stringnums,
-               p1pos: nums,
-               collision: String (T/F/M),
-               time: times,
-               current: true
-               };
+replayDocs = { paddle : paddlePos[player1, player2], ball : ballPos [ballX, ballY],
+              scores : score[player1, player2] }
 \end{verbatim}
-On inputting the fact of a player getting a point, we would input a document looking like this. We will merely increment the score by looking back on the latest entry (greatest time stamp) of a player’s score and incrementing it by one
-\begin{verbatim}
-var p2Miss = {gameID: Stringnums,
-              p2:pos,
-              collision: M,
-              p1score: p1score + 1,
-              time: times,
-              current: true
-              };
-\end{verbatim}
-The flexibility allowed by BSON documents will allow us to store variable amounts of data at any one given point. MongoDB also has quick information retrieval, allowing us to quickly go back through stored documents upon updating and input.
+
+We have set the gameID to Unix time at the start of a game.We initially worried about ensuring uniqueness of gameIDs. We realized it is highly unlikely that there will be duplicates of these IDs.  Player positions, ball positions, and scores are all arrays almost identical to those emitted during gameplay. Player position holds the paddle positions, player one is at zero and player two is at one, the same for scores. Ball have x-coordinates at position zero in the array and y-coordinates at position one. 
+
+It is unnecessary to track collisions as we had first planned. Initially, we were going to simply track paddle positions and run in back through the ball logic and submit it back to the client. However, we have decided it would be best to track the ball position instead of running the paddle position back through the game logic. This way is more efficient and modular.
+
+During gameplay, we cache the desired information into an array, and at the game end we removesave it to the database. When a client requests a game based on its gameID, we retrieve all of the documents with that gameID, sort on the indexes, store it in an array of Javascript objects, and emit the data to the client once.
+
+In this way, we will minimize interaction with the database to the end of a game and client request for replays, allowing us less lag time in our game play and fetching replays.
+
 \subsection{Testing and Verification}
 
 The method used to test our database connection code has primarily consisted of unit testing on the server machine. By using the node-mongodb-native module, any .js files that have calls to the mongodb in them can be run and tested simply by using the ‘node’ command before the file name. Primarily print statements (or, in this case sys.puts(‘ ’); statements) were used to track logical errors. Any compilation on runtime errors were sorted out by referencing the mongodb manuals (as mongojs allows us to write database calls in the mongodb native API) and javascript tutorials. Future integration testing will likely use computer controlled players in games to test data input into the database. After that it will be tested using real player from device inputs.
@@ -476,25 +450,29 @@ Server networking was tested primarily with Google Chrome’s JavaScript inspect
 \section{Reflections}
 \subsection{Technical Challenges}
 \begin{itemize}
-	\item Communication -- simple communication between the phones and server was incredibly challenging. Getting the communication to register on both the server and the phone took a great deal of debugging. Extra research yielding progress and allowed communication to flow smoothly. In retrospect, it would have probably been beneficial to just pick the most documented and widely-used communication library and worked through it. That being said, the current communication library has been working well since we broke through the "wall" of problems.
-	\item Game logic -- the code used as a basis for game logic was not well documented and took a great deal of effort and time to understand the code's implementation, as well as how we could make use of it. It would have probably been better to just write the game logic from scratch, which would not have been too hard since pong was one of the first arcade games ever made.  When the game logic was moved onto the server it could not be easily tested because the server was down after testing and being updated with the code for multiple rooms.  We also relied on the web team in order to view the game and test the logic which forced us to code ot be able to test it in any way for a while after.  The game logic on the server was written using arrays for variables, e.g. paddleSize[x,y] would be the paddle x width and the paddle y height and working with system made it very easy to accidently use y where we wanted x.  This lead to several confusing errors in game play that took us a bit of time to correct.
+\item Javascript -- perhaps the most challenging portion of this project was learning and using Javascript. The concepts of Javascript were foriegn to us and we researched tutorials, 
+\item Communication -- simple communication between the phones and server was incredibly challenging. Getting the communication to register on both the server and the phone took a great deal of debugging. Extra research yielding progress and allowed communication to flow smoothly. In retrospect, it would have probably been beneficial to just pick the most documented and widely-used communication library and worked through it. That being said, the current communication library has been working well since we broke through the "wall" of problems.
+\item Game logic -- the code used as a basis for game logic was not well documented and took a great deal of effort and time to understand the code's implementation, as well as how we could make use of it. It would have probably been better to just write the game logic from scratch, which would not have been too hard since pong was one of the first arcade games ever made.  When the game logic was moved onto the server it could not be easily tested because the server was down after testing and being updated with the code for multiple rooms.  We also relied on the web team in order to view the game and test the logic which forced us to code ot be able to test it in any way for a while after.  The game logic on the server was written using arrays for variables, e.g. paddleSize[x,y] would be the paddle x width and the paddle y height and working with system made it very easy to accidently use y where we wanted x. This lead to several confusing errors in game play that took us a bit of time to correct.
+\item Replays -- there were two challenges posed by replays: the repository and communication. After doing research, we determined that we would use a non-relational database; we then choose the most well-documented non-relational database at current: mongodb. Installing and interacting with mongo provided its own challenges: it had its own unique query system and required modules to connect to code. After developing queries and plans, we had to integrate interaction with the database into communication. It was challenging to determine when we would talk to the database. The phones asked us to provide differences in our code. There were also Javascript issues with this. Mongodb automatically stored inputted data as objects, requiring us to cast if we want to interact with this object. 
 
-	
 \end{itemize}
 
 \subsection{Engineering techniques used}
 \begin{itemize}
-	\item 
+\item Knowing about the software engineering techniques sooner would have been much nicer. We learned about them after we had implimented our code. Without knowing it, we had, with the help of the Andriod mobile development team, created an adaptor to communicate between the server and front-end of the mobil devices.
+Moreover, after learning about software engineering techniques, we attempted to impliment our code with high cohesion and low coupling. 
 \end{itemize}
 
 \subsection{What we would have done differently}
 \begin{itemize}
-	\item 
+\item \textbf{Organization and Planning:} If given the opportunity to restart this project, we would start with a great deal more organization and planning. We were all inexperienced in programming a server and we would have benifitted more from clearer initial planning, organization.
+\item \textbf{Enthusiasm:} As college students, its hard to devote as much time as necessary to the large-scale products like this, particularly when we don't have eight hours a day to work on coding. However, some of us did not show enough initiative in taking charge of this product and developing it to its fullest.  Most of our ideal features were implimented, but not fully functional. If all the members had put forth their time and energy into the developing and integrating process, our features would likely be fully functional.
+\item \textbf{Communication:} All groups have struggled communicating needs and haves accurately, both within and without teams. If we had organized ourselve to talk with each other more often about changes in plans, needs, and new developments the project would have gone more smoothly. Constant communication is essential for a project this size. It was only midway that we actually became organized enough to sit down and communicate across groups.
 \end{itemize}
 
 \subsection{Where we would go from here}
 \begin{itemize}
-	\item
+\item \textbf {Replays:} If we continued this project, one aspect we would continue building would be replays. At current, our replay functionality is merely a proof of concept. We save game information and can turn around and view game information. However, this is not ideal. We access game information based on the gameIDs, which are long strings of numbers representing Unix Time; but these mean nothing to a user. Ideally we would want them to be able to choose a game based one information a user would likely want to look at - usernames, play time, scores, or date. Moreover, we would like to impliment a bit more features on the replay itself, likely in conjunction with client-side development; these would include setting the replay speed largely consisting of pausing the replay, rewinding the replay, and speeding or slowing down the replaying game. There are also some minor features we would include, such as allowing a player to choose whether or not to save the replay and determining when and what to remove from the repository when memory becomes full. Also, perhaps finding some way to minimize the size of stored replays, at current each game is about 200 MB. 
 \end{itemize}
 
 
