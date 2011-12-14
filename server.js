@@ -120,6 +120,16 @@ function addRoom(newRoom, callback) {
   callback();
 }
 
+function deleteRoom(r){
+  delete gRoomNames[gRoomNames.indexOf(r.name)];
+  console.log(gRoomNames);
+  console.log("Removing " + r.name);
+  delete gRooms[r.name];
+  gNumRooms = gNumRooms - 1;
+  io.sockets.emit('roomList', {rooms: gRoomNames, numRooms: gNumRooms});
+  //delete elements from arrays
+}
+
 function authenticate(user, pass, callback){
   var authenticated = false;
   //SQL Database information -- from Web team.
@@ -204,6 +214,14 @@ function Room() {
   this.rDocs = []; //an array of replay docs
 }
 
+Room.prototype.prepForDeletion = function(){
+  for(p in this.players){
+    p.leaveRoom();
+    p.socket.leave("/"+this.name);
+  }
+  deleteRoom(this);
+}
+
 Room.prototype.getName = function(){
   return this.name;
 }
@@ -227,7 +245,7 @@ Room.prototype.joinRoom = function(aClient){
   
   if(this.players.length == 2 && !this.gameOn){
     this.initGame();
-    setTimeout(self.startGame(), 100000);
+    this.startGame(this.prepForDeletion);
 
   } else if (this.players.length == 2 && this.gameOn){
     aClient.emit('gameInfo', {names: [this.players[0].name, this.players[1].name]});
@@ -235,8 +253,9 @@ Room.prototype.joinRoom = function(aClient){
 }
 
 /* This is the main game loop that is set to run every 50 ms. */ 
-Room.prototype.startGame = function(){
+Room.prototype.startGame = function(cb){
     var self = this;
+    var callback = cb;
     self.gameOn = true;
     self.genGameID();  //generating gameID
     var gameInterval = setInterval(function() {
@@ -245,6 +264,7 @@ Room.prototype.startGame = function(){
       //self.cacheGameState(); //caches game state to store into database.
       if(self.gameOn == false){
         clearInterval(gameInterval);
+        callback();
       }
     }, 50);
 }
