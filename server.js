@@ -1,7 +1,12 @@
 /* server.js v.0.4 for vir-pong, inc */
 /* daniel guilak -- daniel.guilak@gmail.com */
 
-var PORT = 3000; //Require the express framework (which creates a server) 
+//Change me to any port you want me to listen on!
+//Remember, you won't be able to go under 1024
+//without running as root.
+var PORT = 3000; 
+
+//Require the express framework (which creates a server) 
 var app = require('express').createServer(), 
           sys = require(process.binding('natives').util ? 'util' : 'sys') 
 
@@ -15,20 +20,22 @@ app.listen(PORT);
 var io = sio.listen(app); 
 io.set('log level', 1); // reduce logging
 
-//Using mongojs to connect to the replays collection database 
-var rDB = require('mongojs').connect('games',['replays']);
 
 //For connecting to the user database -- db-mysql
 //Remember, mysql_client needs to be installed,
 //ubuntu package libmysqlclient16-dev will do it!
 var mysql = require('db-mysql');
 
+//Using mongojs to connect to the replays collection database 
+var rDB = require('mongojs').connect('games',['replays']);
+
+/* Server instances */
 var gClients = [];	//The socket.io clients that are connected.
 var gRooms = []; 	//Array of global Room objects.
 var gRoomNames = [];	//Array of global Room names.
 var gNumRooms = 0; //Keeps track of number of rooms (AArrays don't have length).
 
-var MAXSCORE = 1;	//Play to this many points.
+var MAXSCORE = 6;	//Play to this many points.
 var UPDATE_INTERVAL = 50; //Number of milliseconds to send updates.
 
 /*
@@ -40,7 +47,9 @@ var UPDATE_INTERVAL = 50; //Number of milliseconds to send updates.
 *
 */
 io.sockets.on('connection', function (aClient) {
+  //This will be the new instance of Client.
   var newClient;
+  //This will determine if the client is authenticated or not.
   var isAuthenticated = false;
 
   console.log("Client connecting.");
@@ -201,17 +210,22 @@ function addRoom(newRoom) {
 * @param r the room instance's name to remove from the server 
 *
 */
-function deleteRoom(r){
-  console.log("Room is " + r);
-  var toBeDeleted = gRoomNames.indexOf(r);
-  console.log("To be deleted: " + toBeDeleted + " " + r);
+function deleteRoom(room){
+
+  //Removes players from rooms and socket.io rooms.
+  for(p in room.players){
+    room.players[p].leaveRoom();
+
+    //leave from socket.io room.
+    room.players[p].socket.leave("/"+room.name);
+  }
+
+  var toBeDeleted = gRoomNames.indexOf(room.name);
 
   delete gRoomNames[toBeDeleted];
-  console.log(gRoomNames);
-  console.log(gRoomNames[0]);
 
-  console.log("Removing " + r);
-  delete gRooms[r];
+  console.log("Removing " + room.name);
+  delete gRooms[room.name];
   gNumRooms = gNumRooms - 1;
 
   //Emit an updated room list to everyone.
@@ -223,6 +237,9 @@ function deleteRoom(r){
 * Provides functionality for connecting to the WebUI team's
 * mySQL database for authenticating users.
 * 
+* This code was developed in joint with the WebUI team.
+* There is some duplicate code here, but it is minimal and it works.
+*
 * @param user username
 * @param pass password
 * @param callback(true) if authenticated, callback(false) if not.
@@ -356,21 +373,6 @@ function Room(name) {
   this.rDocs = []; 		//an array of replay docs
 }
 
-/**
- * Preps the room for deletion by forcing all players to leave, and
- * removing them from any related arrays.
- *
- */
-Room.prototype.prepForDeletion = function(name, players){
-//  for(p in players){
-//    p.leaveRoom();
-//
-//    //leave from socket.io room.
-//    p.socket.leave("/"+name);
-//  }
-  console.log("trying to delete " + name);
-  deleteRoom(name);
-}
 
 /**
  * Function called to add player to room.
@@ -399,7 +401,7 @@ Room.prototype.joinRoom = function(aClient){
   if(this.players.length == 2 && !this.gameOn){
     //Initialize the game, and start the game with a callback that
     //sets it for deletion when the game has completed.
-    this.startGame(this.prepForDeletion);
+    this.startGame(deleteRoom);
 
   //If the game has already started and there are two players,
   } else if (this.players.length == 2 && this.gameOn){
@@ -436,6 +438,9 @@ Room.prototype.startGame = function(cb){
     self.gameOn = true;
     self.genGameID();  //generating gameID
     
+    console.log(this.players[0].name + this.players[1].name);
+    var myPlayers = this.players;
+    
     //The main game loop.
     var gameInterval = setInterval(function() {
       self.ballLogic(); //Run ball logic simulation.
@@ -445,7 +450,7 @@ Room.prototype.startGame = function(cb){
       //and call the callback function. Runs at UPDATE_INTERVAL ms.
       if(self.gameOn == false){
         clearInterval(gameInterval);
-        callback(self.name, self.players);
+        callback(gRooms[self.name]);
       }
     }, UPDATE_INTERVAL);
 }
@@ -534,6 +539,7 @@ Room.prototype.ballLogic = function(){
        this.ballPos[1] <= (this.players[0].paddlePos + this.paddleSize[1])) //Left paddle's y range
        { 
          this.ballV[0] = -this.ballV[0]; //changes x direction
+	 this.ballV[1] = this.ballV[1] - 1;
        }
   
      else if(this.ballPos[0] < this.paddleSize[0] &&
