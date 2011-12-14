@@ -28,7 +28,7 @@ var gNumRooms = 0; //Associative arrays are objects, objects don't have length.
 var NOEVENT = 0;
 var WALLBOUNCE = 1;
 var PADDLEBOUNCE = 2;
-var MAXSCORE = 2;
+var MAXSCORE = 5;
 var SCORE = 3;
 
 //  This gets called when someone connects to the server.
@@ -213,6 +213,7 @@ Room.prototype.setName = function(name){
 }
 
 Room.prototype.joinRoom = function(aClient){
+  var self = this;
   if(aClient.clientType == 'player'){
     console.log("players length: " + this.players.length);
     //this.paddlePos[this.numPlayers] = client.paddlePos;
@@ -226,7 +227,8 @@ Room.prototype.joinRoom = function(aClient){
   
   if(this.players.length == 2 && !this.gameOn){
     this.initGame();
-    this.startGame();
+    setTimeout(self.startGame(), 100000);
+
   } else if (this.players.length == 2 && this.gameOn){
     aClient.emit('gameInfo', {names: [this.players[0].name, this.players[1].name]});
   }
@@ -277,7 +279,6 @@ Room.prototype.sendGameState = function(){
   this.rDocs.push({index: this.rIndex, paddle: paddles,
 		   ball: [this.ballPos[0], this.ballPos[1]], scores: [this.score[0], this.score[1]]});
   this.rIndex = this.rIndex + 1; //increment the index
-  console.log("Ballx: " + this.ballPos[0] + "//" + this.rDocs[this.rDocs.length - 1].ball[0]);
 this.pendingEvent = NOEVENT;
 }
 
